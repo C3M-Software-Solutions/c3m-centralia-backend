@@ -1,0 +1,32 @@
+export const config = {
+  server: {
+    port: parseInt(process.env.PORT || '5000', 10),
+    nodeEnv: process.env.NODE_ENV || 'development',
+    corsOrigin: process.env.CORS_ORIGIN || 'http://localhost:3000',
+  },
+  database: {
+    uri: process.env.MONGODB_URI || 'mongodb://localhost:27017/c3m_centralia',
+  },
+  jwt: {
+    secret: process.env.JWT_SECRET || 'your_jwt_secret_key',
+    refreshSecret: process.env.JWT_REFRESH_SECRET || 'your_jwt_refresh_secret_key',
+    expire: process.env.JWT_EXPIRE || '1h',
+    refreshExpire: process.env.JWT_REFRESH_EXPIRE || '7d',
+  },
+  aws: {
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+    region: process.env.AWS_REGION || 'us-east-1',
+    s3Bucket: process.env.AWS_S3_BUCKET || 'c3m-centralia-uploads',
+  },
+  smtp: {
+    host: process.env.SMTP_HOST || 'smtp.gmail.com',
+    port: parseInt(process.env.SMTP_PORT || '587', 10),
+    user: process.env.SMTP_USER,
+    password: process.env.SMTP_PASSWORD,
+    from: process.env.SMTP_FROM || 'noreply@c3mcentral.com',
+  },
+  app: {
+    frontendUrl: process.env.FRONTEND_URL || 'http://localhost:3000',
+  },
+};

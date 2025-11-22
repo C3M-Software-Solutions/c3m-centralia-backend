@@ -1,0 +1,270 @@
+1. Resumen y objetivos
+
+Objetivo general: Construir una aplicación web para gestión de negocios (perfil), administración, manejo de historial clínico y sistema de reservas (turnos), con interfaz responsiva, autenticación, API REST y almacenamiento de evidencias (fotos, doc).
+
+Resultados clave esperados:
+
+CRUD de Negocio y Perfil (incluye foto, RUC, descripción, sede física, sesiones remotas).
+
+CRUD de Especialistas y Servicios.
+
+Sistema de reservas con disponibilidad por horario/día, selección de servicio y especialista.
+
+Historial clínico por usuario con campos médicos (peso, talla, IMC, diagnóstico, tratamiento, discapacidad).
+
+Panel Admin para gestión y reportes.
+
+API documentada, pruebas y despliegue en producción.
+
+2. Alcance (MVP)
+
+Módulo Negocio: crear/editar/ver negocio.
+
+Módulo Reserva: crear/reservar/cancelar/consultar reserva.
+
+Módulo Historial Clínico: registrar y consultar historial por paciente.
+
+Autenticación (correo+password) y roles (admin, especialista, cliente).
+
+Upload de archivos (foto del negocio, evidencias QA, adjuntos clínicos).
+
+Panel admin básico: ver reservas, usuarios, negocios.
+
+Logs y auditoría mínima.
+
+3. Stack tecnológico sugerido
+
+Frontend: React (CRA/Vite) + Tailwind CSS (o componente UI ligero). React Router para rutas.
+
+Backend: Node.js con Express o NestJS (si quieres estructura modular y TypeScript).
+
+Base de datos: PostgreSQL (relacional, transaccional para reservas). Alternativa: MongoDB si prefieres documentos.
+
+ORM: Prisma (Postgres) o TypeORM/Sequelize.
+
+Auth: JWT + refresh tokens. Opcional OAuth2 (Google).
+
+Storage: S3-compatible (AWS S3, DigitalOcean Spaces) para fotos.
+
+CI/CD: GitHub Actions → despliegue a Heroku / DigitalOcean / AWS Elastic Beanstalk / Vercel (frontend).
+
+Contenerización: Docker (opcional para staging).
+
+Tests: Jest (backend), React Testing Library (frontend).
+
+Monitoring: Sentry (errores), logs centralizados (Papertrail / LogDNA).
+
+Documentación API: OpenAPI (Swagger).
+
+4. Modelo de datos (simplificado)
+
+User (id, nombre, email, password_hash, rol{admin,especialista,cliente}, created_at)
+
+Business (id, user_id, nombre, foto_url, descripcion, ruc, sede_fisica boolean, direccion, sesiones_remotas boolean)
+
+Service (id, business_id, nombre, duracion_min, precio, activo)
+
+Specialist (id, user_id, business_id, especialidad, disponibilidad (horarios))
+
+Reservation (id, user_id, business_id, specialist_id, service_id, fecha_inicio, fecha_fin, estado{pendiente,confirmada,cancelada}, notas)
+
+ClinicalRecord (id, user_id, peso, talla, imc, enfermedades[], discapacidad, diagnostico, tratamiento, created_at)
+
+Attachments (id, owner_type, owner_id, url, tipo, metadata)
+
+5. Endpoints clave (REST)
+
+POST /auth/register, POST /auth/login, POST /auth/refresh
+
+GET /businesses, POST /businesses, GET /businesses/:id, PUT /businesses/:id
+
+GET /businesses/:id/services, POST /businesses/:id/services
+
+GET /specialists, POST /specialists
+
+GET /availability?specialist_id=&service_id=&date=
+
+POST /reservations, GET /reservations/:id, GET /users/:id/reservations, PUT /reservations/:id/cancel
+
+GET /users/:id/clinical, POST /users/:id/clinical
+
+POST /attachments (upload), GET /attachments/:id
+
+6. Componentes UI mapeados al mockup
+
+Header: logo, rol/usuario, navegación.
+
+Página Negocio: formulario con campos (nombre, foto, descripción, ruc, sede física checkbox, sesiones remotas).
+
+Card Admin central (panel con métricas/resúmenes).
+
+Historial Clínico: formulario con campos médicos y lista de entradas previas.
+
+Reserva: selector de fecha/hora, duración según servicio, selección de especialista, campo notas, botón reservar.
+
+Modal búsqueda de campos (si como mencionaste en otro contexto).
+
+Listados: reservas (filtro por fecha/estado), especialistas, servicios.
+
+7. Plan por sprints (ejemplo: 6 sprints de 2 semanas = 12 semanas)
+
+Nota: ajustar según recursos. Estimaciones en días/hombre al final.
+
+Sprint 0 — Preparación (1 semana)
+
+Tareas:
+
+Definir requerimientos detallados y flujos principales (documento breve).
+
+Setup repos (frontend/backend), ESLint, Prettier.
+
+Configuración CI/CD básica, Dockerfile, variables de entorno.
+
+Definir DB schema inicial (Prisma/SQL files).
+
+Entregable: repos iniciales con README y scripts de arranque.
+
+Sprint 1 — Autenticación + Usuarios + Business (2 semanas)
+
+Tareas:
+
+Implementar registro/login/backoffice de usuarios (JWT).
+
+CRUD básico Business (backend + frontend).
+
+Upload de imágenes a storage (simulado en dev).
+
+Tests unitarios básicos de auth y business.
+
+Entregable: acceder y gestionar negocios, subir foto.
+
+Sprint 2 — Servicios y Especialistas (2 semanas)
+
+Tareas:
+
+CRUD de Servicios.
+
+CRUD de Especialistas y su vinculación a negocio.
+
+Interfaz para administrar disponibilidad (horarios básicos).
+
+Entregable: lista de servicios y especialistas; setear disponibilidad.
+
+Sprint 3 — Reservas (2 semanas)
+
+Tareas:
+
+Endpoint de disponibilidad (evitar solapamientos).
+
+Formulario de reserva (ser/esp/date/time).
+
+Lógica de bloqueo temporal y confirmación.
+
+Emails de confirmación (SMTP dev).
+
+Entregable: usuarios pueden reservar y recibir confirmación.
+
+Sprint 4 — Historial Clínico y Adjuntos (2 semanas)
+
+Tareas:
+
+CRUD historial clínico.
+
+Asociar attachments a registros clínicos.
+
+Interfaz para especialistas ver/escribir historial.
+
+Entregable: registros clínicos con adjuntos.
+
+Sprint 5 — Panel Admin, Permisos y QA (2 semanas)
+
+Tareas:
+
+Panel admin: ver reservas, filtrar, cancelar, reasignar.
+
+Roles y permisos (Admin / Especialista / Cliente).
+
+Tests E2E (Playwright / Cypress) para flujos críticos.
+
+QA y correcciones.
+
+Entregable: panel admin funcional y pruebas E2E.
+
+Sprint 6 — Despliegue y Documentación (1-2 semanas)
+
+Tareas:
+
+Harden seguridad (rate limit, CORS, validaciones).
+
+Documentar API (Swagger).
+
+Preparar despliegue en producción (rollback plan).
+
+Monitorización y logs.
+
+Entregable: release en producción + docs.
+
+8. Criterios de aceptación (ejemplos)
+
+Reserva no permite doble booking para el mismo especialista y hora.
+
+Campo RUC validado (formato).
+
+Usuarios autenticados solo acceden a sus recursos.
+
+Upload de fotos < 5MB y tipos permitidos (jpg/png/pdf).
+
+Tests unitarios: >70% coverage en lógica crítica.
+
+9. Estimaciones (muy aproximadas)
+
+Asumiendo 1 desarrollador full-stack:
+
+Sprint 0: 5 días
+
+Sprint 1: 10 días
+
+Sprint 2: 10 días
+
+Sprint 3: 10 días
+
+Sprint 4: 10 días
+
+Sprint 5: 10 días
+
+Sprint 6: 5–8 días
+Total: 60–63 días hábiles (~3–4 meses calendario con pausas y correcciones).
+Si trabajas con 2 devs se reduce casi a la mitad.
+
+10. Riesgos y mitigaciones
+
+Riesgo: Conflictos por disponibilidad y zona horaria → Mitigación: definir timezone unificado (UTC) y verificar en frontend.
+
+Riesgo: Requisitos incompletos (p.ej. reglas de negocio en reservas) → Mitigación: sprint 0 para definir reglas con stakeholders.
+
+Riesgo: Integración de storage/SMTP → Mitigación: mocks en dev y pruebas integrales en staging.
+
+Riesgo: Exposición de datos médicos → Mitigación: cifrado en reposo para datos sensibles, HTTPS, políticas de acceso estricto.
+
+11. Checklist para arrancar hoy
+
+Decidir DB: PostgreSQL vs Mongo.
+
+Confirmar hosting preferido (Heroku/DigitalOcean/AWS).
+
+Crear repos frontend/backend y dar acceso a desarrolladores.
+
+Preparar brief con flujos críticos (ej.: reglas de cancelación, ventana para reservar).
+
+Priorizar MVP fields: ¿qué campos del Historial Clínico son obligatorios?
+
+12. Próximos pasos sugeridos (de mi parte)
+
+Si quieres, te genero:
+
+a) Un backlog de historias (user stories) listo para JIRA/ClickUp.
+
+b) El esquema Prisma SQL/DDL inicial.
+
+c) Plantillas de componentes React para los formularios que aparecen en tu mockup.
+Dime cuál prefieres y lo preparo inmediatamente.
