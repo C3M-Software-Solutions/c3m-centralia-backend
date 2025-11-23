@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { Business } from '../models/Business.js';
+import { businessService } from '../services/businessService.js';
 import { AppError } from '../middleware/errorHandler.js';
 
 export const createBusiness = async (
@@ -8,9 +8,14 @@ export const createBusiness = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const business = await Business.create({
+    const userId = req.user?.userId;
+    if (!userId) {
+      throw new AppError('Unauthorized', 401);
+    }
+
+    const business = await businessService.createBusiness({
       ...req.body,
-      user: req.user?.userId,
+      ownerId: userId.toString(),
     });
 
     res.status(201).json({
@@ -28,27 +33,15 @@ export const getAllBusinesses = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const { isActive, search } = req.query;
-    
-    const filter: any = {};
-    
-    if (isActive !== undefined) {
-      filter.isActive = isActive === 'true';
-    }
-    
-    if (search) {
-      filter.$or = [
-        { name: { $regex: search, $options: 'i' } },
-        { description: { $regex: search, $options: 'i' } },
-      ];
-    }
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 10;
 
-    const businesses = await Business.find(filter).populate('user', 'name email');
+    const result = await businessService.getAllBusinesses(page, limit);
 
     res.status(200).json({
       status: 'success',
-      results: businesses.length,
-      data: { businesses },
+      results: result.businesses.length,
+      data: result,
     });
   } catch (error) {
     next(error);
@@ -61,18 +54,24 @@ export const getBusinessById = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const business = await Business.findById(req.params.id).populate('user', 'name email');
-
-    if (!business) {
-      throw new AppError('Business not found', 404);
-    }
+    const business = await businessService.getBusinessById(req.params.id);
 
     res.status(200).json({
       status: 'success',
       data: { business },
     });
   } catch (error) {
-    next(error);
+    if (error instanceof Error) {
+      if (error.message.includes('Invalid business ID')) {
+        next(new AppError('Invalid business ID', 400));
+      } else if (error.message.includes('not found')) {
+        next(new AppError('Business not found', 404));
+      } else {
+        next(error);
+      }
+    } else {
+      next(error);
+    }
   }
 };
 
@@ -82,32 +81,45 @@ export const updateBusiness = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const business = await Business.findById(req.params.id);
+    const userId = req.user?.userId;
+    const userRole = req.user?.role;
 
-    if (!business) {
-      throw new AppError('Business not found', 404);
+    if (!userId) {
+      throw new AppError('Unauthorized', 401);
     }
 
-    // Check ownership or admin role
-    if (
-      business.user.toString() !== req.user?.userId.toString() &&
-      req.user?.role !== 'admin'
-    ) {
-      throw new AppError('Not authorized to update this business', 403);
+    // Admins can update any business
+    let business;
+    if (userRole === 'admin') {
+      business = await businessService.getBusinessById(req.params.id);
+      Object.assign(business, req.body);
+      await business.save();
+    } else {
+      business = await businessService.updateBusiness(
+        req.params.id,
+        userId.toString(),
+        req.body
+      );
     }
-
-    const updatedBusiness = await Business.findByIdAndUpdate(
-      req.params.id,
-      req.body,
-      { new: true, runValidators: true }
-    );
 
     res.status(200).json({
       status: 'success',
-      data: { business: updatedBusiness },
+      data: { business },
     });
   } catch (error) {
-    next(error);
+    if (error instanceof Error) {
+      if (error.message.includes('Invalid business ID')) {
+        next(new AppError('Invalid business ID', 400));
+      } else if (error.message.includes('not found')) {
+        next(new AppError('Business not found', 404));
+      } else if (error.message.includes('Unauthorized')) {
+        next(new AppError('Not authorized to update this business', 403));
+      } else {
+        next(error);
+      }
+    } else {
+      next(error);
+    }
   }
 };
 
@@ -117,27 +129,38 @@ export const deleteBusiness = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const business = await Business.findById(req.params.id);
+    const userId = req.user?.userId;
+    const userRole = req.user?.role;
 
-    if (!business) {
-      throw new AppError('Business not found', 404);
+    if (!userId) {
+      throw new AppError('Unauthorized', 401);
     }
 
-    // Check ownership or admin role
-    if (
-      business.user.toString() !== req.user?.userId.toString() &&
-      req.user?.role !== 'admin'
-    ) {
-      throw new AppError('Not authorized to delete this business', 403);
+    // Admins can delete any business
+    if (userRole === 'admin') {
+      const business = await businessService.getBusinessById(req.params.id);
+      await business.deleteOne();
+    } else {
+      await businessService.deleteBusiness(req.params.id, userId.toString());
     }
-
-    await Business.findByIdAndDelete(req.params.id);
 
     res.status(204).json({
       status: 'success',
       data: null,
     });
   } catch (error) {
-    next(error);
+    if (error instanceof Error) {
+      if (error.message.includes('Invalid business ID')) {
+        next(new AppError('Invalid business ID', 400));
+      } else if (error.message.includes('not found')) {
+        next(new AppError('Business not found', 404));
+      } else if (error.message.includes('Unauthorized')) {
+        next(new AppError('Not authorized to delete this business', 403));
+      } else {
+        next(error);
+      }
+    } else {
+      next(error);
+    }
   }
 };

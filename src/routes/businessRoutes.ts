@@ -220,6 +220,23 @@ const router = Router();
 const businessValidation = [
   body('name').trim().notEmpty().withMessage('Business name is required'),
   body('ruc')
+    .optional()
+    .trim()
+    .matches(/^\d{11}$/)
+    .withMessage('RUC must be 11 digits'),
+  body('description').optional().trim(),
+  body('photoUrl').optional().trim().isURL().withMessage('Photo URL must be valid'),
+  body('address').optional().trim(),
+  body('hasPremises').optional().isBoolean(),
+  body('hasRemoteSessions').optional().isBoolean(),
+  body('phone').optional().trim(),
+  body('email').optional().isEmail().withMessage('Valid email required'),
+];
+
+const businessUpdateValidation = [
+  body('name').optional().trim().notEmpty().withMessage('Business name cannot be empty'),
+  body('ruc')
+    .optional()
     .trim()
     .matches(/^\d{11}$/)
     .withMessage('RUC must be 11 digits'),
@@ -236,7 +253,7 @@ const businessValidation = [
 router.post(
   '/',
   authenticate,
-  authorize('admin', 'specialist'),
+  authorize('admin', 'specialist', 'client'),
   validate(businessValidation),
   createBusiness
 );
@@ -248,11 +265,11 @@ router.get('/:id', getBusinessById);
 router.put(
   '/:id',
   authenticate,
-  authorize('admin', 'specialist'),
-  validate(businessValidation),
+  authorize('admin', 'specialist', 'client'),
+  validate(businessUpdateValidation),
   updateBusiness
 );
 
-router.delete('/:id', authenticate, authorize('admin', 'specialist'), deleteBusiness);
+router.delete('/:id', authenticate, authorize('admin', 'specialist', 'client'), deleteBusiness);
 
 export default router;

@@ -1,7 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { User } from '../models/User.js';
-import { hashPassword, comparePassword } from '../utils/password.js';
-import { generateAccessToken, generateRefreshToken } from '../utils/jwt.js';
+import { authService } from '../services/authService.js';
 import { AppError } from '../middleware/errorHandler.js';
 
 export const register = async (
@@ -10,54 +8,27 @@ export const register = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const { name, email, password, role, phone } = req.body;
+    const { name, email, password, role, phone, avatar } = req.body;
 
-    // Check if user already exists
-    const existingUser = await User.findOne({ email });
-    if (existingUser) {
-      throw new AppError('Email already registered', 409);
-    }
-
-    // Hash password
-    const hashedPassword = await hashPassword(password);
-
-    // Create user
-    const user = await User.create({
+    const result = await authService.register({
       name,
       email,
-      password: hashedPassword,
-      role: role || 'client',
+      password,
+      role,
       phone,
-    });
-
-    // Generate tokens
-    const accessToken = generateAccessToken({
-      userId: user._id,
-      email: user.email,
-      role: user.role,
-    });
-
-    const refreshToken = generateRefreshToken({
-      userId: user._id,
-      email: user.email,
-      role: user.role,
+      avatar,
     });
 
     res.status(201).json({
       status: 'success',
-      data: {
-        user: {
-          id: user._id,
-          name: user.name,
-          email: user.email,
-          role: user.role,
-        },
-        accessToken,
-        refreshToken,
-      },
+      data: result,
     });
   } catch (error) {
-    next(error);
+    if (error instanceof Error && error.message.includes('already exists')) {
+      next(new AppError('Email already registered', 409));
+    } else {
+      next(error);
+    }
   }
 };
 
@@ -69,52 +40,24 @@ export const login = async (
   try {
     const { email, password } = req.body;
 
-    // Find user with password field
-    const user = await User.findOne({ email }).select('+password');
-    
-    if (!user) {
-      throw new AppError('Invalid credentials', 401);
-    }
-
-    if (!user.isActive) {
-      throw new AppError('Account is deactivated', 401);
-    }
-
-    // Check password
-    const isPasswordValid = await comparePassword(password, user.password);
-    
-    if (!isPasswordValid) {
-      throw new AppError('Invalid credentials', 401);
-    }
-
-    // Generate tokens
-    const accessToken = generateAccessToken({
-      userId: user._id,
-      email: user.email,
-      role: user.role,
-    });
-
-    const refreshToken = generateRefreshToken({
-      userId: user._id,
-      email: user.email,
-      role: user.role,
-    });
+    const result = await authService.login({ email, password });
 
     res.status(200).json({
       status: 'success',
-      data: {
-        user: {
-          id: user._id,
-          name: user.name,
-          email: user.email,
-          role: user.role,
-        },
-        accessToken,
-        refreshToken,
-      },
+      data: result,
     });
   } catch (error) {
-    next(error);
+    if (error instanceof Error) {
+      if (error.message.includes('Invalid credentials')) {
+        next(new AppError('Invalid credentials', 401));
+      } else if (error.message.includes('inactive')) {
+        next(new AppError('Account is deactivated', 401));
+      } else {
+        next(error);
+      }
+    } else {
+      next(error);
+    }
   }
 };
 
@@ -124,18 +67,23 @@ export const getProfile = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const user = await User.findById(req.user?.userId);
-
-    if (!user) {
-      throw new AppError('User not found', 404);
+    const userId = req.user?.userId;
+    if (!userId) {
+      throw new AppError('Unauthorized', 401);
     }
+
+    const user = await authService.getProfile(userId.toString());
 
     res.status(200).json({
       status: 'success',
       data: { user },
     });
   } catch (error) {
-    next(error);
+    if (error instanceof Error && error.message.includes('not found')) {
+      next(new AppError('User not found', 404));
+    } else {
+      next(error);
+    }
   }
 };
 
@@ -145,23 +93,24 @@ export const updateProfile = async (
   next: NextFunction
 ): Promise<void> => {
   try {
+    const userId = req.user?.userId;
+    if (!userId) {
+      throw new AppError('Unauthorized', 401);
+    }
+
     const { name, phone, avatar } = req.body;
 
-    const user = await User.findByIdAndUpdate(
-      req.user?.userId,
-      { name, phone, avatar },
-      { new: true, runValidators: true }
-    );
-
-    if (!user) {
-      throw new AppError('User not found', 404);
-    }
+    const user = await authService.updateProfile(userId.toString(), { name, phone, avatar });
 
     res.status(200).json({
       status: 'success',
       data: { user },
     });
   } catch (error) {
-    next(error);
+    if (error instanceof Error && error.message.includes('not found')) {
+      next(new AppError('User not found', 404));
+    } else {
+      next(error);
+    }
   }
 };

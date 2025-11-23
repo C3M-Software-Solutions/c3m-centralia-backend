@@ -5,7 +5,8 @@ export interface IBusiness extends Document {
   name: string;
   description?: string;
   photoUrl?: string;
-  ruc: string;
+  logo?: string;
+  ruc?: string;
   address?: string;
   hasPremises: boolean;
   hasRemoteSessions: boolean;
@@ -46,10 +47,14 @@ const businessSchema = new Schema<IBusiness>(
       type: String,
       trim: true,
     },
+    logo: {
+      type: String,
+      trim: true,
+    },
     ruc: {
       type: String,
-      required: [true, 'RUC is required'],
       trim: true,
+      sparse: true,
       unique: true,
       match: [/^\d{11}$/, 'RUC must be 11 digits'],
     },
