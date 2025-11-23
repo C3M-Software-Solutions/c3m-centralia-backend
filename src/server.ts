@@ -94,13 +94,15 @@ app.use('/api/upload', uploadRoutes);
 app.use(notFound);
 app.use(errorHandler);
 
-// Start server
-const PORT = config.server.port;
+// Start server only if not in Vercel
+if (process.env.VERCEL !== '1') {
+  const PORT = config.server.port;
 
-app.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
-  console.log(`📝 Environment: ${config.server.nodeEnv}`);
-  console.log(`🔗 API available at http://localhost:${PORT}/api`);
-});
+  app.listen(PORT, () => {
+    console.log(`🚀 Server running on port ${PORT}`);
+    console.log(`📝 Environment: ${config.server.nodeEnv}`);
+    console.log(`🔗 API available at http://localhost:${PORT}/api`);
+  });
+}
 
 export default app;
