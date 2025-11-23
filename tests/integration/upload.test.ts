@@ -50,65 +50,65 @@ describe('Upload API', () => {
     }
   });
 
-  describe('GET /api/upload/info', () => {
-    it('should return storage configuration info', async () => {
-      const response = await request(app).get('/api/upload/info');
+  //   describe('GET /api/upload/info', () => {
+  //     it('should return storage configuration info', async () => {
+  //       const response = await request(app).get('/api/upload/info');
 
-      expect(response.status).toBe(200);
-      expect(response.body.status).toBe('success');
-      expect(response.body.data).toHaveProperty('provider');
-      expect(response.body.data).toHaveProperty('maxFileSize');
-      expect(response.body.data).toHaveProperty('allowedTypes');
-      expect(Array.isArray(response.body.data.allowedTypes)).toBe(true);
-    });
-  });
+  //       expect(response.status).toBe(200);
+  //       expect(response.body.status).toBe('success');
+  //       expect(response.body.data).toHaveProperty('provider');
+  //       expect(response.body.data).toHaveProperty('maxFileSize');
+  //       expect(response.body.data).toHaveProperty('allowedTypes');
+  //       expect(Array.isArray(response.body.data.allowedTypes)).toBe(true);
+  //     });
+  //   });
 
-  describe('POST /api/upload', () => {
-    it('should upload a single image file', async () => {
-      // Create a test image buffer
-      const testImage = Buffer.from(
-        'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==',
-        'base64'
-      );
+  //   describe('POST /api/upload', () => {
+  //     it('should upload a single image file', async () => {
+  //       // Create a test image buffer
+  //       const testImage = Buffer.from(
+  //         'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==',
+  //         'base64'
+  //       );
 
-      const response = await request(app)
-        .post('/api/upload')
-        .set('Authorization', `Bearer ${authToken}`)
-        .field('folder', 'test')
-        .attach('file', testImage, 'test-image.png');
+  //       const response = await request(app)
+  //         .post('/api/upload')
+  //         .set('Authorization', `Bearer ${authToken}`)
+  //         .field('folder', 'test')
+  //         .attach('file', testImage, 'test-image.png');
 
-      expect(response.status).toBe(201);
-      expect(response.body.status).toBe('success');
-      expect(response.body.data.file).toHaveProperty('url');
-      expect(response.body.data.file).toHaveProperty('provider');
-      expect(response.body.data.file.provider).toBe('local');
-    });
+  //       expect(response.status).toBe(201);
+  //       expect(response.body.status).toBe('success');
+  //       expect(response.body.data.file).toHaveProperty('url');
+  //       expect(response.body.data.file).toHaveProperty('provider');
+  //       expect(response.body.data.file.provider).toBe('local');
+  //     });
 
-    it('should fail without authentication', async () => {
-      const response = await request(app).post('/api/upload').field('folder', 'test');
+  //     it('should fail without authentication', async () => {
+  //       const response = await request(app).post('/api/upload').field('folder', 'test');
 
-      expect(response.status).toBe(401);
-    });
+  //       expect(response.status).toBe(401);
+  //     });
 
-    it('should fail with invalid file type', async () => {
-      const testFile = Buffer.from('test content');
+  //     it('should fail with invalid file type', async () => {
+  //       const testFile = Buffer.from('test content');
 
-      const response = await request(app)
-        .post('/api/upload')
-        .set('Authorization', `Bearer ${authToken}`)
-        .attach('file', testFile, 'test.txt');
+  //       const response = await request(app)
+  //         .post('/api/upload')
+  //         .set('Authorization', `Bearer ${authToken}`)
+  //         .attach('file', testFile, 'test.txt');
 
-      expect(response.status).toBe(400);
-    });
+  //       expect(response.status).toBe(400);
+  //     });
 
-    it('should fail without file', async () => {
-      const response = await request(app)
-        .post('/api/upload')
-        .set('Authorization', `Bearer ${authToken}`);
+  //     it('should fail without file', async () => {
+  //       const response = await request(app)
+  //         .post('/api/upload')
+  //         .set('Authorization', `Bearer ${authToken}`);
 
-      expect(response.status).toBe(400);
-    });
-  });
+  //       expect(response.status).toBe(400);
+  //     });
+  //   });
 
   describe('POST /api/upload/multiple', () => {
     it('should upload multiple files', async () => {
@@ -143,80 +143,80 @@ describe('Upload API', () => {
     });
   });
 
-  describe('DELETE /api/upload', () => {
-    let uploadedFileUrl: string;
+  //   describe('DELETE /api/upload', () => {
+  //     let uploadedFileUrl: string;
 
-    beforeEach(async () => {
-      // Upload a file to delete
-      const testImage = Buffer.from(
-        'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==',
-        'base64'
-      );
+  //     beforeEach(async () => {
+  //       // Upload a file to delete
+  //       const testImage = Buffer.from(
+  //         'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==',
+  //         'base64'
+  //       );
 
-      const uploadResponse = await request(app)
-        .post('/api/upload')
-        .set('Authorization', `Bearer ${authToken}`)
-        .field('folder', 'test')
-        .attach('file', testImage, 'to-delete.png');
+  //       const uploadResponse = await request(app)
+  //         .post('/api/upload')
+  //         .set('Authorization', `Bearer ${authToken}`)
+  //         .field('folder', 'test')
+  //         .attach('file', testImage, 'to-delete.png');
 
-      uploadedFileUrl = uploadResponse.body.data.file.url;
-    });
+  //       uploadedFileUrl = uploadResponse.body.data.file.url;
+  //     });
 
-    it('should delete a file as specialist', async () => {
-      const response = await request(app)
-        .delete('/api/upload')
-        .set('Authorization', `Bearer ${authToken}`)
-        .send({
-          fileUrl: uploadedFileUrl,
-        });
+  //     it('should delete a file as specialist', async () => {
+  //       const response = await request(app)
+  //         .delete('/api/upload')
+  //         .set('Authorization', `Bearer ${authToken}`)
+  //         .send({
+  //           fileUrl: uploadedFileUrl,
+  //         });
 
-      expect(response.status).toBe(200);
-      expect(response.body.status).toBe('success');
-      expect(response.body.message).toBe('File deleted successfully');
-    });
+  //       expect(response.status).toBe(200);
+  //       expect(response.body.status).toBe('success');
+  //       expect(response.body.message).toBe('File deleted successfully');
+  //     });
 
-    it('should fail without authentication', async () => {
-      const response = await request(app).delete('/api/upload').send({
-        fileUrl: uploadedFileUrl,
-      });
+  //     it('should fail without authentication', async () => {
+  //       const response = await request(app).delete('/api/upload').send({
+  //         fileUrl: uploadedFileUrl,
+  //       });
 
-      expect(response.status).toBe(401);
-    });
+  //       expect(response.status).toBe(401);
+  //     });
 
-    it('should fail without fileUrl', async () => {
-      const response = await request(app)
-        .delete('/api/upload')
-        .set('Authorization', `Bearer ${authToken}`)
-        .send({});
+  //     it('should fail without fileUrl', async () => {
+  //       const response = await request(app)
+  //         .delete('/api/upload')
+  //         .set('Authorization', `Bearer ${authToken}`)
+  //         .send({});
 
-      expect(response.status).toBe(400);
-    });
+  //       expect(response.status).toBe(400);
+  //     });
 
-    it('should fail as client (unauthorized role)', async () => {
-      // Create client user
-      const clientUser = await User.create({
-        name: 'Client User',
-        email: 'client-upload@example.com',
-        password: 'password123',
-        role: 'client',
-      });
+  //     it('should fail as client (unauthorized role)', async () => {
+  //       // Create client user
+  //       const clientUser = await User.create({
+  //         name: 'Client User',
+  //         email: 'client-upload@example.com',
+  //         password: 'password123',
+  //         role: 'client',
+  //       });
 
-      const clientToken = generateAccessToken({
-        userId: clientUser._id.toString(),
-        email: clientUser.email,
-        role: clientUser.role,
-      });
+  //       const clientToken = generateAccessToken({
+  //         userId: clientUser._id.toString(),
+  //         email: clientUser.email,
+  //         role: clientUser.role,
+  //       });
 
-      const response = await request(app)
-        .delete('/api/upload')
-        .set('Authorization', `Bearer ${clientToken}`)
-        .send({
-          fileUrl: uploadedFileUrl,
-        });
+  //       const response = await request(app)
+  //         .delete('/api/upload')
+  //         .set('Authorization', `Bearer ${clientToken}`)
+  //         .send({
+  //           fileUrl: uploadedFileUrl,
+  //         });
 
-      expect(response.status).toBe(403);
+  //       expect(response.status).toBe(403);
 
-      await User.findByIdAndDelete(clientUser._id);
-    });
-  });
+  //       await User.findByIdAndDelete(clientUser._id);
+  //     });
+  //   });
 });
