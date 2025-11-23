@@ -271,9 +271,9 @@ describe('Business Service Tests', () => {
     it('should throw error for non-existent business', async () => {
       const fakeId = '507f1f77bcf86cd799439011';
 
-      await expect(
-        businessService.deleteBusiness(fakeId, testUser._id.toString())
-      ).rejects.toThrow('Business not found');
+      await expect(businessService.deleteBusiness(fakeId, testUser._id.toString())).rejects.toThrow(
+        'Business not found'
+      );
     });
   });
 
@@ -313,7 +313,9 @@ describe('Business Service Tests', () => {
         price: 50,
       };
 
-      await expect(businessService.createService(serviceData)).rejects.toThrow('Business not found');
+      await expect(businessService.createService(serviceData)).rejects.toThrow(
+        'Business not found'
+      );
     });
 
     it('should get services by business', async () => {

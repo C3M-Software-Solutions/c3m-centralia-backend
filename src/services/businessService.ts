@@ -79,7 +79,7 @@ export class BusinessService {
       .populate('user', 'name email')
       .skip(skip)
       .limit(limit);
-    
+
     const total = await Business.countDocuments({ isActive: true });
 
     return {
@@ -210,12 +210,18 @@ export class BusinessService {
   }
 
   async getSpecialistsByBusiness(businessId: string) {
-    const specialists = await Specialist.find({ business: businessId, isActive: true })
-      .populate('user', 'name email phone avatar');
+    const specialists = await Specialist.find({ business: businessId, isActive: true }).populate(
+      'user',
+      'name email phone avatar'
+    );
     return specialists;
   }
 
-  async updateSpecialist(specialistId: string, businessId: string, data: Partial<CreateSpecialistData>) {
+  async updateSpecialist(
+    specialistId: string,
+    businessId: string,
+    data: Partial<CreateSpecialistData>
+  ) {
     const specialist = await Specialist.findById(specialistId);
     if (!specialist) {
       throw new Error('Specialist not found');

@@ -248,11 +248,6 @@ router.get('/availability', checkAvailability);
 
 router.get('/:id', authenticate, getReservationById);
 
-router.put(
-  '/:id/status',
-  authenticate,
-  validate(updateStatusValidation),
-  updateReservationStatus
-);
+router.put('/:id/status', authenticate, validate(updateStatusValidation), updateReservationStatus);
 
 export default router;
