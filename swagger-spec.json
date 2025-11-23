@@ -1,0 +1,1790 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "C3M Centralia API",
+    "version": "1.0.0",
+    "description": "Business management, clinical records, and appointment booking system",
+    "contact": {
+      "name": "API Support",
+      "email": "support@c3mcentral.com"
+    },
+    "license": {
+      "name": "ISC",
+      "url": "https://opensource.org/licenses/ISC"
+    }
+  },
+  "servers": [
+    {
+      "url": "http://localhost:5000",
+      "description": "Development server"
+    },
+    {
+      "url": "https://c3m-centralia-backend.vercel.app",
+      "description": "Production server"
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "Enter JWT token"
+      }
+    },
+    "schemas": {
+      "Error": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "example": "error"
+          },
+          "message": {
+            "type": "string",
+            "example": "Error message"
+          }
+        }
+      },
+      "User": {
+        "type": "object",
+        "properties": {
+          "_id": {
+            "type": "string",
+            "example": "507f1f77bcf86cd799439011"
+          },
+          "name": {
+            "type": "string",
+            "example": "John Doe"
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "example": "john@example.com"
+          },
+          "role": {
+            "type": "string",
+            "enum": ["admin", "specialist", "client"],
+            "example": "client"
+          },
+          "phone": {
+            "type": "string",
+            "example": "+1234567890"
+          },
+          "avatar": {
+            "type": "string",
+            "example": "https://example.com/avatar.jpg"
+          },
+          "isActive": {
+            "type": "boolean",
+            "example": true
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "Business": {
+        "type": "object",
+        "properties": {
+          "_id": {
+            "type": "string"
+          },
+          "user": {
+            "type": "string",
+            "description": "User ID"
+          },
+          "name": {
+            "type": "string",
+            "example": "Wellness Center"
+          },
+          "description": {
+            "type": "string",
+            "example": "Premium wellness services"
+          },
+          "ruc": {
+            "type": "string",
+            "example": "12345678901"
+          },
+          "physicalLocation": {
+            "type": "boolean",
+            "example": true
+          },
+          "address": {
+            "type": "string",
+            "example": "123 Main Street"
+          },
+          "remoteSessions": {
+            "type": "boolean",
+            "example": true
+          },
+          "photoUrl": {
+            "type": "string",
+            "example": "https://example.com/business.jpg"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "Service": {
+        "type": "object",
+        "properties": {
+          "_id": {
+            "type": "string"
+          },
+          "business": {
+            "type": "string",
+            "description": "Business ID"
+          },
+          "name": {
+            "type": "string",
+            "example": "Massage Therapy"
+          },
+          "durationMinutes": {
+            "type": "number",
+            "example": 60
+          },
+          "price": {
+            "type": "number",
+            "example": 75
+          },
+          "description": {
+            "type": "string",
+            "example": "Relaxing full body massage"
+          },
+          "active": {
+            "type": "boolean",
+            "example": true
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "Specialist": {
+        "type": "object",
+        "properties": {
+          "_id": {
+            "type": "string"
+          },
+          "user": {
+            "type": "string",
+            "description": "User ID"
+          },
+          "business": {
+            "type": "string",
+            "description": "Business ID"
+          },
+          "specialty": {
+            "type": "string",
+            "example": "Physical Therapy"
+          },
+          "availability": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "dayOfWeek": {
+                  "type": "string",
+                  "enum": [
+                    "monday",
+                    "tuesday",
+                    "wednesday",
+                    "thursday",
+                    "friday",
+                    "saturday",
+                    "sunday"
+                  ],
+                  "example": "monday"
+                },
+                "startTime": {
+                  "type": "string",
+                  "pattern": "^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$",
+                  "example": "09:00"
+                },
+                "endTime": {
+                  "type": "string",
+                  "pattern": "^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$",
+                  "example": "17:00"
+                },
+                "available": {
+                  "type": "boolean",
+                  "example": true
+                }
+              }
+            }
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "Reservation": {
+        "type": "object",
+        "properties": {
+          "_id": {
+            "type": "string"
+          },
+          "user": {
+            "type": "string",
+            "description": "Client User ID"
+          },
+          "business": {
+            "type": "string",
+            "description": "Business ID"
+          },
+          "specialist": {
+            "type": "string",
+            "description": "Specialist ID"
+          },
+          "service": {
+            "type": "string",
+            "description": "Service ID"
+          },
+          "startTime": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2024-12-25T09:00:00.000Z"
+          },
+          "endTime": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2024-12-25T10:00:00.000Z"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["pending", "confirmed", "cancelled", "completed"],
+            "example": "pending"
+          },
+          "notes": {
+            "type": "string",
+            "example": "First time appointment"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "ClinicalRecord": {
+        "type": "object",
+        "properties": {
+          "_id": {
+            "type": "string"
+          },
+          "user": {
+            "type": "string",
+            "description": "Patient User ID"
+          },
+          "weight": {
+            "type": "number",
+            "example": 70.5
+          },
+          "height": {
+            "type": "number",
+            "example": 175
+          },
+          "bmi": {
+            "type": "number",
+            "example": 23.02
+          },
+          "diseases": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "example": ["Hypertension"]
+          },
+          "disability": {
+            "type": "string",
+            "example": "None"
+          },
+          "diagnosis": {
+            "type": "string",
+            "example": "Patient shows signs of..."
+          },
+          "treatment": {
+            "type": "string",
+            "example": "Prescribed medication..."
+          },
+          "notes": {
+            "type": "string",
+            "example": "Follow-up in 2 weeks"
+          },
+          "createdBy": {
+            "type": "string",
+            "description": "Specialist User ID"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "Attachment": {
+        "type": "object",
+        "properties": {
+          "_id": {
+            "type": "string"
+          },
+          "ownerType": {
+            "type": "string",
+            "example": "ClinicalRecord"
+          },
+          "ownerId": {
+            "type": "string",
+            "description": "Reference to owner document"
+          },
+          "url": {
+            "type": "string",
+            "example": "https://s3.amazonaws.com/bucket/file.pdf"
+          },
+          "type": {
+            "type": "string",
+            "enum": ["image", "document", "other"],
+            "example": "document"
+          },
+          "metadata": {
+            "type": "object",
+            "properties": {
+              "filename": {
+                "type": "string",
+                "example": "lab_results.pdf"
+              },
+              "size": {
+                "type": "number",
+                "example": 1024000
+              }
+            }
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "Authentication",
+      "description": "User authentication endpoints"
+    },
+    {
+      "name": "Businesses",
+      "description": "Business management endpoints"
+    },
+    {
+      "name": "Services",
+      "description": "Service management endpoints"
+    },
+    {
+      "name": "Specialists",
+      "description": "Specialist management endpoints"
+    },
+    {
+      "name": "Reservations",
+      "description": "Appointment booking endpoints"
+    },
+    {
+      "name": "Clinical Records",
+      "description": "Medical records endpoints"
+    },
+    {
+      "name": "Upload",
+      "description": "File upload and management endpoints (supports local, S3, and Cloudinary)"
+    }
+  ],
+  "paths": {
+    "/api/auth/register": {
+      "post": {
+        "summary": "Register a new user",
+        "tags": ["Authentication"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["name", "email", "password"],
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "example": "John Doe"
+                  },
+                  "email": {
+                    "type": "string",
+                    "format": "email",
+                    "example": "john@example.com"
+                  },
+                  "password": {
+                    "type": "string",
+                    "format": "password",
+                    "minLength": 6,
+                    "example": "password123"
+                  },
+                  "role": {
+                    "type": "string",
+                    "enum": ["admin", "specialist", "client"],
+                    "default": "client"
+                  },
+                  "phone": {
+                    "type": "string",
+                    "example": 1234567890
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "User registered successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "example": "success"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "user": {
+                          "$ref": "#/components/schemas/User"
+                        },
+                        "accessToken": {
+                          "type": "string"
+                        },
+                        "refreshToken": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error or user already exists",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/login": {
+      "post": {
+        "summary": "Login user",
+        "tags": ["Authentication"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["email", "password"],
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "format": "email",
+                    "example": "john@example.com"
+                  },
+                  "password": {
+                    "type": "string",
+                    "format": "password",
+                    "example": "password123"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Login successful",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "example": "success"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "user": {
+                          "$ref": "#/components/schemas/User"
+                        },
+                        "accessToken": {
+                          "type": "string"
+                        },
+                        "refreshToken": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid credentials",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/profile": {
+      "get": {
+        "summary": "Get user profile",
+        "tags": ["Authentication"],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "User profile retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "example": "success"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "user": {
+                          "$ref": "#/components/schemas/User"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "summary": "Update user profile",
+        "tags": ["Authentication"],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "example": "John Doe Updated"
+                  },
+                  "phone": {
+                    "type": "string",
+                    "example": 1234567890
+                  },
+                  "avatar": {
+                    "type": "string",
+                    "format": "uri",
+                    "example": "https://example.com/avatar.jpg"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Profile updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "example": "success"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "user": {
+                          "$ref": "#/components/schemas/User"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/businesses": {
+      "post": {
+        "summary": "Create a new business",
+        "tags": ["Businesses"],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["name", "ruc"],
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "example": "Wellness Center"
+                  },
+                  "ruc": {
+                    "type": "string",
+                    "pattern": "^\\d{11}$",
+                    "example": 12345678901
+                  },
+                  "description": {
+                    "type": "string",
+                    "example": "Premium wellness services"
+                  },
+                  "photoUrl": {
+                    "type": "string",
+                    "format": "uri"
+                  },
+                  "address": {
+                    "type": "string"
+                  },
+                  "hasPremises": {
+                    "type": "boolean"
+                  },
+                  "hasRemoteSessions": {
+                    "type": "boolean"
+                  },
+                  "phone": {
+                    "type": "string"
+                  },
+                  "email": {
+                    "type": "string",
+                    "format": "email"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Business created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "example": "success"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "business": {
+                          "$ref": "#/components/schemas/Business"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient permissions"
+          }
+        }
+      },
+      "get": {
+        "summary": "Get all businesses",
+        "tags": ["Businesses"],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "schema": {
+              "type": "integer",
+              "default": 1
+            },
+            "description": "Page number"
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "type": "integer",
+              "default": 10
+            },
+            "description": "Number of items per page"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of businesses",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "example": "success"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "businesses": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/Business"
+                          }
+                        },
+                        "pagination": {
+                          "type": "object"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/businesses/{id}": {
+      "get": {
+        "summary": "Get business by ID",
+        "tags": ["Businesses"],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Business ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Business details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "example": "success"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "business": {
+                          "$ref": "#/components/schemas/Business"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Business not found"
+          }
+        }
+      },
+      "put": {
+        "summary": "Update business",
+        "tags": ["Businesses"],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Business ID"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "description": {
+                    "type": "string"
+                  },
+                  "photoUrl": {
+                    "type": "string"
+                  },
+                  "address": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Business updated successfully"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Business not found"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete business",
+        "tags": ["Businesses"],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Business ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Business deleted successfully"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Business not found"
+          }
+        }
+      }
+    },
+    "/api/clinical-records": {
+      "post": {
+        "summary": "Create a new clinical record",
+        "tags": ["Clinical Records"],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["user", "business", "diagnosis", "treatment"],
+                "properties": {
+                  "user": {
+                    "type": "string",
+                    "description": "Patient ID"
+                  },
+                  "business": {
+                    "type": "string",
+                    "description": "Business ID"
+                  },
+                  "specialist": {
+                    "type": "string",
+                    "description": "Specialist ID"
+                  },
+                  "reservation": {
+                    "type": "string",
+                    "description": "Related reservation ID"
+                  },
+                  "diagnosis": {
+                    "type": "string",
+                    "description": "Medical diagnosis"
+                  },
+                  "treatment": {
+                    "type": "string",
+                    "description": "Prescribed treatment"
+                  },
+                  "weight": {
+                    "type": "number",
+                    "description": "Patient weight in kg"
+                  },
+                  "height": {
+                    "type": "number",
+                    "description": "Patient height in cm"
+                  },
+                  "bmi": {
+                    "type": "number",
+                    "description": "Body Mass Index"
+                  },
+                  "bloodPressure": {
+                    "type": "string",
+                    "description": "Blood pressure (e.g., 120/80)"
+                  },
+                  "heartRate": {
+                    "type": "integer",
+                    "description": "Heart rate in bpm"
+                  },
+                  "temperature": {
+                    "type": "number",
+                    "description": "Body temperature in °C"
+                  },
+                  "diseases": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "List of diseases"
+                  },
+                  "allergies": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "List of allergies"
+                  },
+                  "medications": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Current medications"
+                  },
+                  "disability": {
+                    "type": "string",
+                    "description": "Any disability information"
+                  },
+                  "notes": {
+                    "type": "string",
+                    "description": "Additional notes"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Clinical record created successfully"
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - Only specialists can create records"
+          }
+        }
+      },
+      "get": {
+        "summary": "Get clinical records (filtered by role)",
+        "tags": ["Clinical Records"],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "patientId",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Filter by patient ID (admin only)"
+          },
+          {
+            "in": "query",
+            "name": "specialistId",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Filter by specialist ID (admin only)"
+          },
+          {
+            "in": "query",
+            "name": "businessId",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Filter by business ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of clinical records",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/clinical-records/{id}": {
+      "get": {
+        "summary": "Get clinical record by ID",
+        "tags": ["Clinical Records"],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Clinical record ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Clinical record details"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - Not authorized to view this record"
+          },
+          "404": {
+            "description": "Clinical record not found"
+          }
+        }
+      },
+      "put": {
+        "summary": "Update clinical record",
+        "tags": ["Clinical Records"],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Clinical record ID"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "diagnosis": {
+                    "type": "string"
+                  },
+                  "treatment": {
+                    "type": "string"
+                  },
+                  "weight": {
+                    "type": "number"
+                  },
+                  "height": {
+                    "type": "number"
+                  },
+                  "bmi": {
+                    "type": "number"
+                  },
+                  "bloodPressure": {
+                    "type": "string"
+                  },
+                  "heartRate": {
+                    "type": "integer"
+                  },
+                  "temperature": {
+                    "type": "number"
+                  },
+                  "diseases": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "allergies": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "medications": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "disability": {
+                    "type": "string"
+                  },
+                  "notes": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Clinical record updated successfully"
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - Only specialists can update records"
+          },
+          "404": {
+            "description": "Clinical record not found"
+          }
+        }
+      }
+    },
+    "/api/reservations/availability": {
+      "get": {
+        "summary": "Check specialist availability",
+        "tags": ["Reservations"],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "specialistId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Specialist ID"
+          },
+          {
+            "in": "query",
+            "name": "serviceId",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Service ID (optional)"
+          },
+          {
+            "in": "query",
+            "name": "date",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            },
+            "description": "Date to check (YYYY-MM-DD)"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Available time slots",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "example": "success"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "availableSlots": {
+                          "type": "array",
+                          "items": {
+                            "type": "string",
+                            "format": "date-time"
+                          }
+                        },
+                        "serviceDuration": {
+                          "type": "number"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/reservations": {
+      "post": {
+        "summary": "Create a new reservation",
+        "tags": ["Reservations"],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["business", "specialist", "service", "startDate"],
+                "properties": {
+                  "business": {
+                    "type": "string",
+                    "description": "Business ID"
+                  },
+                  "specialist": {
+                    "type": "string",
+                    "description": "Specialist ID"
+                  },
+                  "service": {
+                    "type": "string",
+                    "description": "Service ID"
+                  },
+                  "startDate": {
+                    "type": "string",
+                    "format": "date-time",
+                    "example": "2024-12-25T09:00:00.000Z"
+                  },
+                  "notes": {
+                    "type": "string",
+                    "example": "First time appointment"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Reservation created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "example": "success"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "reservation": {
+                          "$ref": "#/components/schemas/Reservation"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Time slot not available"
+          }
+        }
+      },
+      "get": {
+        "summary": "Get all reservations",
+        "tags": ["Reservations"],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "status",
+            "schema": {
+              "type": "string",
+              "enum": ["pending", "confirmed", "cancelled", "completed"]
+            },
+            "description": "Filter by status"
+          },
+          {
+            "in": "query",
+            "name": "startDate",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            },
+            "description": "Filter from date"
+          },
+          {
+            "in": "query",
+            "name": "endDate",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            },
+            "description": "Filter to date"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of reservations",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "example": "success"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "reservations": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/Reservation"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/reservations/{id}": {
+      "get": {
+        "summary": "Get reservation by ID",
+        "tags": ["Reservations"],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Reservation ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Reservation details"
+          },
+          "404": {
+            "description": "Reservation not found"
+          }
+        }
+      }
+    },
+    "/api/reservations/{id}/status": {
+      "put": {
+        "summary": "Update reservation status",
+        "tags": ["Reservations"],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Reservation ID"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["status"],
+                "properties": {
+                  "status": {
+                    "type": "string",
+                    "enum": ["pending", "confirmed", "cancelled", "completed", "no-show"]
+                  },
+                  "cancellationReason": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Status updated successfully"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Reservation not found"
+          }
+        }
+      }
+    },
+    "/api/upload": {
+      "post": {
+        "summary": "Upload a single file",
+        "tags": ["Upload"],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": ["file"],
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "File to upload"
+                  },
+                  "folder": {
+                    "type": "string",
+                    "description": "Folder name (optional)",
+                    "example": "avatars"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "File uploaded successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "example": "success"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "file": {
+                          "type": "object",
+                          "properties": {
+                            "url": {
+                              "type": "string",
+                              "example": "https://example.com/uploads/file.jpg"
+                            },
+                            "provider": {
+                              "type": "string",
+                              "enum": ["local", "s3", "cloudinary"]
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete a file",
+        "tags": ["Upload"],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["fileUrl"],
+                "properties": {
+                  "fileUrl": {
+                    "type": "string",
+                    "description": "URL or path of the file to delete",
+                    "example": "/uploads/avatars/file.jpg"
+                  },
+                  "provider": {
+                    "type": "string",
+                    "enum": ["local", "s3", "cloudinary"],
+                    "description": "Storage provider (optional, uses default if not specified)"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "File deleted successfully"
+          },
+          "400": {
+            "description": "Bad request"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
+    "/api/upload/multiple": {
+      "post": {
+        "summary": "Upload multiple files",
+        "tags": ["Upload"],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": ["files"],
+                "properties": {
+                  "files": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "format": "binary"
+                    },
+                    "description": "Files to upload (max 10)"
+                  },
+                  "folder": {
+                    "type": "string",
+                    "description": "Folder name (optional)",
+                    "example": "documents"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Files uploaded successfully"
+          },
+          "400": {
+            "description": "Bad request"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/upload/info": {
+      "get": {
+        "summary": "Get storage configuration info",
+        "tags": ["Upload"],
+        "responses": {
+          "200": {
+            "description": "Storage info retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "example": "success"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "provider": {
+                          "type": "string",
+                          "enum": ["local", "s3", "cloudinary"]
+                        },
+                        "maxFileSize": {
+                          "type": "integer",
+                          "example": 5242880
+                        },
+                        "allowedTypes": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
