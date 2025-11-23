@@ -45,9 +45,16 @@ class StorageService {
   private uploadDir = path.join(process.cwd(), 'uploads');
 
   constructor() {
-    // Ensure upload directory exists for local storage
-    if (!fs.existsSync(this.uploadDir)) {
-      fs.mkdirSync(this.uploadDir, { recursive: true });
+    // Only create upload directory in non-serverless environments
+    // Vercel and similar serverless platforms have read-only file systems
+    const isServerless = process.env.VERCEL === '1' || process.env.AWS_LAMBDA_FUNCTION_NAME;
+
+    if (!isServerless && !fs.existsSync(this.uploadDir)) {
+      try {
+        fs.mkdirSync(this.uploadDir, { recursive: true });
+      } catch (error) {
+        console.warn('Could not create uploads directory:', error);
+      }
     }
   }
 
@@ -148,6 +155,17 @@ class StorageService {
     file: Express.Multer.File,
     options: UploadOptions
   ): Promise<UploadResult> {
+    // Check if running in serverless environment
+    const isServerless = process.env.VERCEL === '1' || process.env.AWS_LAMBDA_FUNCTION_NAME;
+
+    if (isServerless) {
+      throw new Error(
+        'Local file storage is not available in serverless environments. ' +
+          'Please configure S3 or Cloudinary storage provider. ' +
+          'Set STORAGE_PROVIDER=s3 or STORAGE_PROVIDER=cloudinary in environment variables.'
+      );
+    }
+
     const folder = options.folder || 'general';
     const folderPath = path.join(this.uploadDir, folder);
 
@@ -232,6 +250,12 @@ class StorageService {
    * Delete file from local storage
    */
   private async deleteFromLocal(fileUrl: string): Promise<void> {
+    const isServerless = process.env.VERCEL === '1' || process.env.AWS_LAMBDA_FUNCTION_NAME;
+
+    if (isServerless) {
+      throw new Error('Local file storage is not available in serverless environments.');
+    }
+
     const filePath = path.join(process.cwd(), fileUrl.replace(/^\//, ''));
 
     if (fs.existsSync(filePath)) {
