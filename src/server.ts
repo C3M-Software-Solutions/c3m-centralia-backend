@@ -20,7 +20,19 @@ const app: Express = express();
 connectDatabase();
 
 // Middleware
-app.use(helmet()); // Security headers
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        styleSrc: ["'self'", "'unsafe-inline'", 'https://cdnjs.cloudflare.com'],
+        scriptSrc: ["'self'", 'https://cdnjs.cloudflare.com'],
+        imgSrc: ["'self'", 'data:', 'https:'],
+        connectSrc: ["'self'"],
+      },
+    },
+  })
+); // Security headers
 app.use(
   cors({
     origin: config.server.corsOrigin,
@@ -35,7 +47,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
 
 // Swagger Documentation
-// Use CDN for static assets in production/Vercel to avoid MIME type issues
+// Always use CDN to avoid static file serving issues in serverless
 const swaggerUiOptions = {
   explorer: true,
   customCss: '.swagger-ui .topbar { display: none }',
@@ -43,19 +55,19 @@ const swaggerUiOptions = {
   swaggerOptions: {
     persistAuthorization: true,
   },
-  // Use CDN in serverless environments
-  customCssUrl: process.env.VERCEL
-    ? 'https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.10.5/swagger-ui.min.css'
-    : undefined,
-  customJs: process.env.VERCEL
-    ? [
-        'https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.10.5/swagger-ui-bundle.min.js',
-        'https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.10.5/swagger-ui-standalone-preset.min.js',
-      ]
-    : undefined,
+  customCssUrl: 'https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.10.5/swagger-ui.min.css',
+  customJs: [
+    'https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.10.5/swagger-ui-bundle.min.js',
+    'https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.10.5/swagger-ui-standalone-preset.min.js',
+  ],
 };
 
-app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, swaggerUiOptions));
+// Don't use swaggerUi.serve to avoid static file issues
+app.get('/api-docs', (_req: Request, res: Response) => {
+  res.redirect('/api-docs/');
+});
+
+app.use('/api-docs/', swaggerUi.setup(swaggerSpec, swaggerUiOptions));
 
 // Root route
 app.get('/', (_req: Request, res: Response) => {
