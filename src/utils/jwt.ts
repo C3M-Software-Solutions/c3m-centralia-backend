@@ -15,7 +15,9 @@ export const generateAccessToken = (payload: JwtPayload): string => {
 
 export const generateRefreshToken = (payload: JwtPayload): string => {
   // @ts-expect-error - expiresIn accepts string like '7d'
-  return jwt.sign(payload as object, config.jwt.refreshSecret, { expiresIn: config.jwt.refreshExpire });
+  return jwt.sign(payload as object, config.jwt.refreshSecret, {
+    expiresIn: config.jwt.refreshExpire,
+  });
 };
 
 export const verifyAccessToken = (token: string): JwtPayload => {

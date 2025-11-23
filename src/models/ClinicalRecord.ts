@@ -127,4 +127,7 @@ clinicalRecordSchema.index({ user: 1, createdAt: -1 });
 clinicalRecordSchema.index({ specialist: 1 });
 clinicalRecordSchema.index({ business: 1 });
 
-export const ClinicalRecord = mongoose.model<IClinicalRecord>('ClinicalRecord', clinicalRecordSchema);
+export const ClinicalRecord = mongoose.model<IClinicalRecord>(
+  'ClinicalRecord',
+  clinicalRecordSchema
+);

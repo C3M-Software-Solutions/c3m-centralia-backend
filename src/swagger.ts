@@ -206,7 +206,15 @@ const options: swaggerJsdoc.Options = {
                 properties: {
                   dayOfWeek: {
                     type: 'string',
-                    enum: ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'],
+                    enum: [
+                      'monday',
+                      'tuesday',
+                      'wednesday',
+                      'thursday',
+                      'friday',
+                      'saturday',
+                      'sunday',
+                    ],
                     example: 'monday',
                   },
                   startTime: {
