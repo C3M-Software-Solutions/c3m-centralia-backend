@@ -1,11 +1,6 @@
 {
   "version": 2,
   "name": "c3m-centralia-backend",
-  "functions": {
-    "api/index.js": {
-      "includeFiles": "{dist/openapi.yaml,node_modules/swagger-ui-dist/**}"
-    }
-  },
   "buildCommand": "npm run build",
   "builds": [
     {
