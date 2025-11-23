@@ -1,6 +1,13 @@
 # C3M Centralia Backend
 
+[![CI/CD Pipeline](https://github.com/yourusername/c3m_centralia_backend/actions/workflows/ci.yml/badge.svg)](https://github.com/yourusername/c3m_centralia_backend/actions/workflows/ci.yml)
+[![License: ISC](https://img.shields.io/badge/License-ISC-blue.svg)](https://opensource.org/licenses/ISC)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.3-blue)](https://www.typescriptlang.org/)
+[![Node](https://img.shields.io/badge/Node.js-20+-green)](https://nodejs.org/)
+
 Business management, clinical records, and appointment booking system API built with Node.js, Express, TypeScript, and MongoDB.
+
+> **✨ New**: Complete CI/CD pipeline with GitHub Actions, pre-commit hooks with Husky, and 159 automated tests!
 
 ## 🌟 Features
 
@@ -86,22 +93,26 @@ src/
 ### Installation
 
 1. Clone the repository:
+
 ```bash
 git clone <repository-url>
 cd c3m_centralia_backend
 ```
 
 2. Install dependencies:
+
 ```bash
 npm install
 ```
 
 3. Create environment file:
+
 ```bash
 cp .env.example .env
 ```
 
 4. Configure your `.env` file with your settings:
+
 ```env
 NODE_ENV=development
 PORT=5000
@@ -111,6 +122,7 @@ JWT_SECRET=your_secret_key_here
 ```
 
 5. Start MongoDB:
+
 ```bash
 # Using local MongoDB
 mongod
@@ -119,6 +131,7 @@ mongod
 ```
 
 6. Run the development server:
+
 ```bash
 npm run dev
 ```
@@ -131,17 +144,101 @@ The server will start on `http://localhost:5000`
 - `npm run build` - Build TypeScript to JavaScript
 - `npm start` - Start production server
 - `npm run lint` - Run ESLint
-- `npm test` - Run tests
+- `npm run lint:fix` - Fix ESLint issues automatically
+- `npm test` - Run all tests
+- `npm run test:watch` - Run tests in watch mode
+- `npm run test:coverage` - Generate test coverage report
+- `npm run commit` - Interactive commit with Commitizen
+
+## 🧪 Testing
+
+The project has **159 automated tests** with **83.6% passing rate**:
+
+- **Unit Tests** (96 tests): Models, Services, Utilities
+- **Integration Tests** (63 tests): API Endpoints end-to-end
+
+### Test Structure
+
+```
+tests/
+├── setup.ts                        # Global test configuration
+├── unit/
+│   ├── user.model.test.ts          # User model validation
+│   ├── business.model.test.ts      # Business model tests (24 tests)
+│   ├── business.service.test.ts    # Business service tests (48 tests)
+│   ├── reservation.model.test.ts   # Reservation model tests (33 tests)
+│   ├── reservation.service.test.ts # Reservation service tests (18 tests)
+│   ├── clinicalRecord.model.test.ts # Clinical record model (17 tests)
+│   ├── clinicalRecord.service.test.ts # Clinical record service (11 tests)
+│   ├── jwt.test.ts                 # JWT utilities
+│   └── password.test.ts            # Password hashing
+└── integration/
+    ├── auth.test.ts                # Authentication endpoints
+    ├── business.test.ts            # Business endpoints
+    ├── reservation.test.ts         # Reservation endpoints (13 tests)
+    └── clinicalRecord.test.ts      # Clinical record endpoints (4 tests)
+```
+
+### Running Tests
+
+```bash
+# Run all tests
+npm test
+
+# Run with coverage
+npm run test:coverage
+
+# Run in watch mode
+npm run test:watch
+```
+
+## 🔄 CI/CD Pipeline
+
+This project uses **GitHub Actions** for continuous integration and deployment:
+
+### Automated Checks
+
+Every push and pull request triggers:
+
+1. **Lint Job**: ESLint validation
+2. **TypeCheck Job**: TypeScript compilation
+3. **Test Job**: Full test suite with coverage reporting
+4. **Security Job**: npm audit for vulnerabilities
+5. **Build Job**: Production build with artifacts
+
+### Pre-commit Hooks
+
+**Husky** runs locally before each commit:
+
+- ✅ ESLint auto-fix on staged TypeScript files
+- ✅ Prettier formatting
+- ✅ Commit message validation (Conventional Commits)
+
+### Workflow Badges
+
+Check the CI/CD status at the top of this README.
+
+## 📝 Contributing
+
+See [CONTRIBUTING.md](./CONTRIBUTING.md) for:
+
+- Development workflow
+- Commit message format (Conventional Commits)
+- Code review process
+- Testing guidelines
+- Pre-commit hooks setup
 
 ## API Endpoints
 
 ### Authentication
+
 - `POST /api/auth/register` - Register new user
 - `POST /api/auth/login` - Login user
 - `GET /api/auth/profile` - Get user profile (protected)
 - `PUT /api/auth/profile` - Update user profile (protected)
 
 ### Business
+
 - `POST /api/businesses` - Create business (specialist/admin)
 - `GET /api/businesses` - Get all businesses
 - `GET /api/businesses/:id` - Get business by ID
@@ -149,6 +246,7 @@ The server will start on `http://localhost:5000`
 - `DELETE /api/businesses/:id` - Delete business (owner/admin)
 
 ### Reservations
+
 - `POST /api/reservations` - Create reservation (authenticated)
 - `GET /api/reservations` - Get reservations (filtered by role)
 - `GET /api/reservations/availability` - Check availability
@@ -156,6 +254,7 @@ The server will start on `http://localhost:5000`
 - `PUT /api/reservations/:id/status` - Update reservation status
 
 ### Clinical Records
+
 - `POST /api/clinical-records` - Create clinical record (specialist/admin)
 - `GET /api/clinical-records` - Get clinical records (filtered by role)
 - `GET /api/clinical-records/:id` - Get clinical record by ID
@@ -164,34 +263,40 @@ The server will start on `http://localhost:5000`
 ## Data Models
 
 ### User
+
 - name, email, password, role (admin/specialist/client)
 - phone, avatar, isActive
 - timestamps
 
 ### Business
+
 - user (reference), name, description, photoUrl
 - ruc, address, hasPremises, hasRemoteSessions
 - schedule, phone, email, isActive
 - timestamps
 
 ### Service
+
 - business (reference), name, description
 - duration (minutes), price, category, isActive
 - timestamps
 
 ### Specialist
+
 - user (reference), business (reference)
 - specialty, licenseNumber, bio
 - availability (schedule), services, isActive
 - timestamps
 
 ### Reservation
+
 - user, business, specialist, service (references)
 - startDate, endDate, status
 - notes, cancellationReason, reminderSent
 - timestamps
 
 ### Clinical Record
+
 - user, specialist, business (references)
 - weight, height, bmi, bloodPressure, heartRate, temperature
 - diseases, allergies, medications, disability
@@ -199,6 +304,7 @@ The server will start on `http://localhost:5000`
 - timestamps
 
 ### Attachment
+
 - ownerType, ownerId
 - fileName, fileUrl, fileType, fileSize, mimeType
 - uploadedBy (reference), metadata
@@ -230,6 +336,7 @@ The API returns consistent error responses:
 ```
 
 Common HTTP status codes:
+
 - 200: Success
 - 201: Created
 - 400: Bad Request (validation errors)
@@ -242,6 +349,7 @@ Common HTTP status codes:
 ## Development Roadmap
 
 ### Sprint 1 ✅
+
 - [x] Project setup and configuration
 - [x] Database models
 - [x] Authentication system
@@ -249,18 +357,21 @@ Common HTTP status codes:
 - [x] Basic API structure
 
 ### Sprint 2 (Next)
+
 - [ ] Service and Specialist management
 - [ ] Complete file upload functionality
 - [ ] Email notifications
 - [ ] Advanced search and filtering
 
 ### Sprint 3
+
 - [ ] Admin dashboard endpoints
 - [ ] Reports and analytics
 - [ ] Advanced reservation features
 - [ ] Rate limiting and security hardening
 
 ### Sprint 4
+
 - [ ] Testing (unit & integration)
 - [ ] API documentation (Swagger/OpenAPI)
 - [ ] Performance optimization

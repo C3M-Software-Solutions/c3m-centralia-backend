@@ -1,84 +1,94 @@
 import { Reservation } from '../models/Reservation.js';
-import { Business } from '../models/Business.js';
 import { Service } from '../models/Service.js';
 import { Specialist } from '../models/Specialist.js';
+import { Types } from 'mongoose';
 
 export interface CreateReservationData {
+  userId: string;
   businessId: string;
   serviceId: string;
   specialistId: string;
-  clientId: string;
-  date: Date;
-  startTime: string;
-  endTime: string;
+  startDate: Date;
   notes?: string;
 }
 
 export interface UpdateReservationData {
-  date?: Date;
-  startTime?: string;
-  endTime?: string;
-  status?: 'pending' | 'confirmed' | 'completed' | 'cancelled';
+  status?: 'pending' | 'confirmed' | 'completed' | 'cancelled' | 'no-show';
+  cancellationReason?: string;
   notes?: string;
+}
+
+export interface ReservationFilterData {
+  userId?: string;
+  specialistId?: string;
+  status?: string;
+  startDate?: Date;
+  endDate?: Date;
 }
 
 export class ReservationService {
   async createReservation(data: CreateReservationData) {
-    // Verify business exists
-    const business = await Business.findById(data.businessId);
-    if (!business) {
-      throw new Error('Business not found');
-    }
-
-    // Verify service exists
-    const service = await Service.findById(data.serviceId);
-    if (!service) {
-      throw new Error('Service not found');
-    }
-
-    // Verify specialist exists
+    // Verify specialist exists and is active
     const specialist = await Specialist.findById(data.specialistId);
-    if (!specialist) {
-      throw new Error('Specialist not found');
+    if (!specialist || !specialist.isActive) {
+      throw new Error('Specialist not found or inactive');
     }
 
-    // Check for time conflicts
-    const conflict = await Reservation.findOne({
+    // Verify service exists and get duration
+    const service = await Service.findById(data.serviceId);
+    if (!service || !service.isActive) {
+      throw new Error('Service not found or inactive');
+    }
+
+    // Calculate end date based on service duration
+    const start = new Date(data.startDate);
+    const end = new Date(start.getTime() + service.duration * 60000);
+
+    // Check for conflicts
+    const conflictingReservation = await Reservation.findOne({
       specialist: data.specialistId,
-      date: data.date,
       status: { $in: ['pending', 'confirmed'] },
       $or: [
-        {
-          startTime: { $lt: data.endTime },
-          endTime: { $gt: data.startTime },
-        },
+        { startDate: { $lt: end, $gte: start } },
+        { endDate: { $gt: start, $lte: end } },
+        { startDate: { $lte: start }, endDate: { $gte: end } },
       ],
     });
 
-    if (conflict) {
-      throw new Error('Time slot already reserved');
+    if (conflictingReservation) {
+      throw new Error('Time slot is already booked');
     }
 
     const reservation = await Reservation.create({
+      user: data.userId,
       business: data.businessId,
-      service: data.serviceId,
       specialist: data.specialistId,
-      client: data.clientId,
-      date: data.date,
-      startTime: data.startTime,
-      endTime: data.endTime,
+      service: data.serviceId,
+      startDate: start,
+      endDate: end,
       notes: data.notes,
+      status: 'pending',
     });
 
-    return reservation;
+    const populatedReservation = await Reservation.findById(reservation._id)
+      .populate('user', 'name email phone')
+      .populate('business', 'name')
+      .populate('specialist')
+      .populate('service', 'name duration price');
+
+    return populatedReservation;
   }
 
   async getReservationById(reservationId: string) {
+    if (!Types.ObjectId.isValid(reservationId)) {
+      throw new Error('Invalid reservation ID');
+    }
+
     const reservation = await Reservation.findById(reservationId)
-      .populate('business', 'name address phone')
-      .populate('service', 'name duration price')
+      .populate('user', 'name email phone')
+      .populate('business', 'name address')
       .populate('specialist')
-      .populate('client', 'name email phone');
+      .populate('service', 'name duration price');
 
     if (!reservation) {
       throw new Error('Reservation not found');
@@ -87,145 +97,131 @@ export class ReservationService {
     return reservation;
   }
 
-  async getReservationsByClient(clientId: string, page = 1, limit = 10) {
-    const skip = (page - 1) * limit;
-    const reservations = await Reservation.find({ client: clientId })
-      .populate('business', 'name address phone')
-      .populate('service', 'name duration price')
+  async getReservations(filter: ReservationFilterData) {
+    interface QueryFilter {
+      user?: string;
+      specialist?: string;
+      status?: string;
+      startDate?: {
+        $gte?: Date;
+        $lte?: Date;
+      };
+    }
+
+    const query: QueryFilter = {};
+
+    if (filter.userId) {
+      query.user = filter.userId;
+    }
+
+    if (filter.specialistId) {
+      query.specialist = filter.specialistId;
+    }
+
+    if (filter.status) {
+      query.status = filter.status;
+    }
+
+    if (filter.startDate || filter.endDate) {
+      query.startDate = {};
+      if (filter.startDate) query.startDate.$gte = filter.startDate;
+      if (filter.endDate) query.startDate.$lte = filter.endDate;
+    }
+
+    const reservations = await Reservation.find(query)
+      .populate('user', 'name email phone')
+      .populate('business', 'name address')
       .populate('specialist')
-      .sort({ date: -1, startTime: -1 })
-      .skip(skip)
-      .limit(limit);
-
-    const total = await Reservation.countDocuments({ client: clientId });
-
-    return {
-      reservations,
-      pagination: {
-        page,
-        limit,
-        total,
-        pages: Math.ceil(total / limit),
-      },
-    };
-  }
-
-  async getReservationsByBusiness(businessId: string, page = 1, limit = 10) {
-    const skip = (page - 1) * limit;
-    const reservations = await Reservation.find({ business: businessId })
       .populate('service', 'name duration price')
-      .populate('specialist')
-      .populate('client', 'name email phone')
-      .sort({ date: -1, startTime: -1 })
-      .skip(skip)
-      .limit(limit);
+      .sort({ startDate: 1 });
 
-    const total = await Reservation.countDocuments({ business: businessId });
-
-    return {
-      reservations,
-      pagination: {
-        page,
-        limit,
-        total,
-        pages: Math.ceil(total / limit),
-      },
-    };
+    return reservations;
   }
 
-  async getReservationsBySpecialist(specialistId: string, page = 1, limit = 10) {
-    const skip = (page - 1) * limit;
-    const reservations = await Reservation.find({ specialist: specialistId })
-      .populate('business', 'name address phone')
-      .populate('service', 'name duration price')
-      .populate('client', 'name email phone')
-      .sort({ date: -1, startTime: -1 })
-      .skip(skip)
-      .limit(limit);
+  async updateReservationStatus(
+    reservationId: string,
+    userId: string,
+    userRole: string,
+    data: UpdateReservationData
+  ) {
+    if (!Types.ObjectId.isValid(reservationId)) {
+      throw new Error('Invalid reservation ID');
+    }
 
-    const total = await Reservation.countDocuments({ specialist: specialistId });
-
-    return {
-      reservations,
-      pagination: {
-        page,
-        limit,
-        total,
-        pages: Math.ceil(total / limit),
-      },
-    };
-  }
-
-  async updateReservation(reservationId: string, userId: string, userRole: string, data: UpdateReservationData) {
     const reservation = await Reservation.findById(reservationId);
     if (!reservation) {
       throw new Error('Reservation not found');
     }
 
     // Check authorization
-    const clientId = reservation.get('client');
-    const isClient = clientId?.toString() === userId;
+    const reservationUserId = reservation.user?.toString() || reservation.get('user')?.toString();
+    const isOwner = reservationUserId === userId;
     const isAdmin = userRole === 'admin';
-    
-    if (!isClient && !isAdmin) {
-      // Check if user is specialist of this reservation
-      const specialistId = reservation.get('specialist');
+
+    if (!isOwner && !isAdmin) {
+      // Check if user is the specialist of this reservation
+      const reservationSpecialistId =
+        reservation.specialist?.toString() || reservation.get('specialist')?.toString();
       const specialist = await Specialist.findOne({
-        _id: specialistId,
+        _id: reservationSpecialistId,
         user: userId,
       });
-      
-      if (!specialist) {
-        throw new Error('Unauthorized to update this reservation');
+
+      if (!specialist && userRole === 'client' && data.status !== 'cancelled') {
+        throw new Error('Clients can only cancel reservations');
+      }
+
+      if (!specialist && userRole === 'client') {
+        throw new Error('Unauthorized to modify this reservation');
       }
     }
 
     // Update fields
-    Object.assign(reservation, data);
+    if (data.status) reservation.status = data.status;
+    if (data.cancellationReason) reservation.cancellationReason = data.cancellationReason;
+    if (data.notes !== undefined) reservation.notes = data.notes;
+
     await reservation.save();
 
-    return reservation;
+    const updatedReservation = await Reservation.findById(reservationId)
+      .populate('user', 'name email phone')
+      .populate('business', 'name')
+      .populate('specialist')
+      .populate('service', 'name duration price');
+
+    return updatedReservation;
   }
 
-  async cancelReservation(reservationId: string, userId: string, userRole: string) {
-    const reservation = await Reservation.findById(reservationId);
-    if (!reservation) {
-      throw new Error('Reservation not found');
+  async checkAvailability(specialistId: string, serviceId: string, date: Date) {
+    if (!Types.ObjectId.isValid(specialistId) || !Types.ObjectId.isValid(serviceId)) {
+      throw new Error('Invalid specialist or service ID');
     }
 
-    // Check authorization
-    const clientId = reservation.get('client');
-    const isClient = clientId?.toString() === userId;
-    const isAdmin = userRole === 'admin';
-    
-    if (!isClient && !isAdmin) {
-      throw new Error('Unauthorized to cancel this reservation');
+    const service = await Service.findById(serviceId);
+    if (!service) {
+      throw new Error('Service not found');
     }
 
-    // Check if reservation can be cancelled
-    if (reservation.status === 'completed' || reservation.status === 'cancelled') {
-      throw new Error('Cannot cancel a completed or already cancelled reservation');
-    }
+    // Get reservations for the day
+    const startOfDay = new Date(date);
+    startOfDay.setHours(0, 0, 0, 0);
 
-    reservation.status = 'cancelled';
-    await reservation.save();
+    const endOfDay = new Date(date);
+    endOfDay.setHours(23, 59, 59, 999);
 
-    return reservation;
-  }
+    const bookedSlots = await Reservation.find({
+      specialist: specialistId,
+      status: { $in: ['pending', 'confirmed'] },
+      startDate: { $gte: startOfDay, $lte: endOfDay },
+    }).select('startDate endDate');
 
-  async deleteReservation(reservationId: string, userRole: string) {
-    const reservation = await Reservation.findById(reservationId);
-    if (!reservation) {
-      throw new Error('Reservation not found');
-    }
-
-    // Only admins can delete reservations
-    if (userRole !== 'admin') {
-      throw new Error('Unauthorized to delete reservations');
-    }
-
-    await Reservation.deleteOne({ _id: reservationId });
-    return { message: 'Reservation deleted successfully' };
+    return {
+      serviceDuration: service.duration,
+      bookedSlots: bookedSlots.map((slot) => ({
+        start: slot.startDate,
+        end: slot.endDate,
+      })),
+    };
   }
 }
 

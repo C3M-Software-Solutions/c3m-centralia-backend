@@ -1,7 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
-import { Reservation } from '../models/Reservation.js';
+import { reservationService } from '../services/reservationService.js';
 import { Specialist } from '../models/Specialist.js';
-import { Service } from '../models/Service.js';
 import { AppError } from '../middleware/errorHandler.js';
 
 export const createReservation = async (
@@ -11,61 +10,37 @@ export const createReservation = async (
 ): Promise<void> => {
   try {
     const { business, specialist, service, startDate, notes } = req.body;
+    const userId = req.user?.userId;
 
-    // Verify specialist exists and is active
-    const specialistDoc = await Specialist.findById(specialist);
-    if (!specialistDoc || !specialistDoc.isActive) {
-      throw new AppError('Specialist not found or inactive', 404);
+    if (!userId) {
+      throw new AppError('Unauthorized', 401);
     }
 
-    // Verify service exists and get duration
-    const serviceDoc = await Service.findById(service);
-    if (!serviceDoc || !serviceDoc.isActive) {
-      throw new AppError('Service not found or inactive', 404);
-    }
-
-    // Calculate end date based on service duration
-    const start = new Date(startDate);
-    const end = new Date(start.getTime() + serviceDoc.duration * 60000);
-
-    // Check for conflicts
-    const conflictingReservation = await Reservation.findOne({
-      specialist,
-      status: { $in: ['pending', 'confirmed'] },
-      $or: [
-        { startDate: { $lt: end, $gte: start } },
-        { endDate: { $gt: start, $lte: end } },
-        { startDate: { $lte: start }, endDate: { $gte: end } },
-      ],
-    });
-
-    if (conflictingReservation) {
-      throw new AppError('Time slot is already booked', 409);
-    }
-
-    const reservation = await Reservation.create({
-      user: req.user?.userId,
-      business,
-      specialist,
-      service,
-      startDate: start,
-      endDate: end,
+    const reservation = await reservationService.createReservation({
+      userId: userId.toString(),
+      businessId: business,
+      specialistId: specialist,
+      serviceId: service,
+      startDate: new Date(startDate),
       notes,
-      status: 'pending',
     });
-
-    const populatedReservation = await Reservation.findById(reservation._id)
-      .populate('user', 'name email phone')
-      .populate('business', 'name')
-      .populate('specialist')
-      .populate('service', 'name duration price');
 
     res.status(201).json({
       status: 'success',
-      data: { reservation: populatedReservation },
+      data: { reservation },
     });
   } catch (error) {
-    next(error);
+    if (error instanceof Error) {
+      if (error.message.includes('not found') || error.message.includes('inactive')) {
+        next(new AppError(error.message, 404));
+      } else if (error.message.includes('already booked')) {
+        next(new AppError(error.message, 409));
+      } else {
+        next(error);
+      }
+    } else {
+      next(error);
+    }
   }
 };
 
@@ -76,39 +51,38 @@ export const getReservations = async (
 ): Promise<void> => {
   try {
     const { status, specialist, startDate, endDate } = req.query;
-    
-    const filter: any = {};
+    const userId = req.user?.userId;
+    const userRole = req.user?.role;
+
+    const filter: Record<string, unknown> = {};
 
     // Users see only their reservations, specialists see theirs, admins see all
-    if (req.user?.role === 'client') {
-      filter.user = req.user.userId;
-    } else if (req.user?.role === 'specialist') {
-      const specialistDoc = await Specialist.findOne({ user: req.user.userId });
+    if (userRole === 'client') {
+      filter.userId = userId?.toString();
+    } else if (userRole === 'specialist') {
+      const specialistDoc = await Specialist.findOne({ user: userId });
       if (specialistDoc) {
-        filter.specialist = specialistDoc._id;
+        filter.specialistId = specialistDoc._id.toString();
       }
     }
 
     if (status) {
-      filter.status = status;
+      filter.status = status as string;
     }
 
     if (specialist) {
-      filter.specialist = specialist;
+      filter.specialistId = specialist as string;
     }
 
-    if (startDate || endDate) {
-      filter.startDate = {};
-      if (startDate) filter.startDate.$gte = new Date(startDate as string);
-      if (endDate) filter.startDate.$lte = new Date(endDate as string);
+    if (startDate) {
+      filter.startDate = new Date(startDate as string);
     }
 
-    const reservations = await Reservation.find(filter)
-      .populate('user', 'name email phone')
-      .populate('business', 'name address')
-      .populate('specialist')
-      .populate('service', 'name duration price')
-      .sort({ startDate: 1 });
+    if (endDate) {
+      filter.endDate = new Date(endDate as string);
+    }
+
+    const reservations = await reservationService.getReservations(filter);
 
     res.status(200).json({
       status: 'success',
@@ -126,15 +100,7 @@ export const getReservationById = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const reservation = await Reservation.findById(req.params.id)
-      .populate('user', 'name email phone')
-      .populate('business', 'name address')
-      .populate('specialist')
-      .populate('service', 'name duration price');
-
-    if (!reservation) {
-      throw new AppError('Reservation not found', 404);
-    }
+    const reservation = await reservationService.getReservationById(req.params.id);
 
     // Check authorization
     if (
@@ -149,7 +115,17 @@ export const getReservationById = async (
       data: { reservation },
     });
   } catch (error) {
-    next(error);
+    if (error instanceof Error) {
+      if (error.message.includes('Invalid reservation ID')) {
+        next(new AppError('Invalid reservation ID', 400));
+      } else if (error.message.includes('not found')) {
+        next(new AppError('Reservation not found', 404));
+      } else {
+        next(error);
+      }
+    } else {
+      next(error);
+    }
   }
 };
 
@@ -160,39 +136,41 @@ export const updateReservationStatus = async (
 ): Promise<void> => {
   try {
     const { status, cancellationReason } = req.body;
+    const userId = req.user?.userId;
+    const userRole = req.user?.role;
 
-    const reservation = await Reservation.findById(req.params.id);
-
-    if (!reservation) {
-      throw new AppError('Reservation not found', 404);
+    if (!userId) {
+      throw new AppError('Unauthorized', 401);
     }
 
-    // Authorization checks
-    if (req.user?.role === 'client') {
-      if (reservation.user.toString() !== req.user.userId.toString()) {
-        throw new AppError('Not authorized', 403);
-      }
-      if (status !== 'cancelled') {
-        throw new AppError('Clients can only cancel reservations', 403);
-      }
-    }
-
-    const updatedReservation = await Reservation.findByIdAndUpdate(
+    const reservation = await reservationService.updateReservationStatus(
       req.params.id,
-      { status, cancellationReason },
-      { new: true, runValidators: true }
-    )
-      .populate('user', 'name email phone')
-      .populate('business', 'name')
-      .populate('specialist')
-      .populate('service', 'name duration price');
+      userId.toString(),
+      userRole || 'client',
+      { status, cancellationReason }
+    );
 
     res.status(200).json({
       status: 'success',
-      data: { reservation: updatedReservation },
+      data: { reservation },
     });
   } catch (error) {
-    next(error);
+    if (error instanceof Error) {
+      if (error.message.includes('Invalid reservation ID')) {
+        next(new AppError('Invalid reservation ID', 400));
+      } else if (error.message.includes('not found')) {
+        next(new AppError('Reservation not found', 404));
+      } else if (
+        error.message.includes('Unauthorized') ||
+        error.message.includes('Clients can only')
+      ) {
+        next(new AppError(error.message, 403));
+      } else {
+        next(error);
+      }
+    } else {
+      next(error);
+    }
   }
 };
 
@@ -208,35 +186,27 @@ export const checkAvailability = async (
       throw new AppError('Specialist, service, and date are required', 400);
     }
 
-    const serviceDoc = await Service.findById(service);
-    if (!serviceDoc) {
-      throw new AppError('Service not found', 404);
-    }
-
-    // Get reservations for the day
-    const startOfDay = new Date(date as string);
-    startOfDay.setHours(0, 0, 0, 0);
-    
-    const endOfDay = new Date(date as string);
-    endOfDay.setHours(23, 59, 59, 999);
-
-    const bookedSlots = await Reservation.find({
-      specialist,
-      status: { $in: ['pending', 'confirmed'] },
-      startDate: { $gte: startOfDay, $lte: endOfDay },
-    }).select('startDate endDate');
+    const availability = await reservationService.checkAvailability(
+      specialist as string,
+      service as string,
+      new Date(date as string)
+    );
 
     res.status(200).json({
       status: 'success',
-      data: {
-        serviceDuration: serviceDoc.duration,
-        bookedSlots: bookedSlots.map((slot) => ({
-          start: slot.startDate,
-          end: slot.endDate,
-        })),
-      },
+      data: availability,
     });
   } catch (error) {
-    next(error);
+    if (error instanceof Error) {
+      if (error.message.includes('Invalid')) {
+        next(new AppError(error.message, 400));
+      } else if (error.message.includes('not found')) {
+        next(new AppError('Service not found', 404));
+      } else {
+        next(error);
+      }
+    } else {
+      next(error);
+    }
   }
 };

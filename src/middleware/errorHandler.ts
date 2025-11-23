@@ -18,7 +18,7 @@ export const errorHandler = (
   _req: Request,
   res: Response,
   _next: NextFunction
-// eslint-disable-next-line @typescript-eslint/no-invalid-void-type
+  // eslint-disable-next-line @typescript-eslint/no-invalid-void-type
 ): Response | void => {
   if (err instanceof AppError) {
     return res.status(err.statusCode).json({
@@ -37,7 +37,11 @@ export const errorHandler = (
   }
 
   // Handle Mongoose duplicate key errors
-  if (err.name === 'MongoServerError' && (err as any).code === 11000) {
+  if (
+    err.name === 'MongoServerError' &&
+    'code' in err &&
+    (err as { code: number }).code === 11000
+  ) {
     return res.status(409).json({
       status: 'error',
       message: 'Duplicate field value entered',
@@ -75,7 +79,9 @@ export const notFound = (req: Request, _res: Response, next: NextFunction) => {
   next(error);
 };
 
-export const asyncHandler = (fn: Function) => {
+export const asyncHandler = (
+  fn: (req: Request, res: Response, next: NextFunction) => Promise<void> | void
+) => {
   return (req: Request, res: Response, next: NextFunction) => {
     Promise.resolve(fn(req, res, next)).catch(next);
   };

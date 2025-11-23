@@ -7,16 +7,15 @@ export interface CreateClinicalRecordData {
   patientId: string;
   businessId: string;
   specialistId: string;
-  reservationId?: string;
   diagnosis: string;
   treatment: string;
   notes?: string;
   vitalSigns?: {
+    weight?: number;
+    height?: number;
     bloodPressure?: string;
     heartRate?: number;
     temperature?: number;
-    weight?: number;
-    height?: number;
   };
 }
 
@@ -61,17 +60,40 @@ export class ClinicalRecordService {
     }
 
     const clinicalRecord = await ClinicalRecord.create({
-      patient: data.patientId,
+      user: data.patientId,
       business: data.businessId,
       specialist: data.specialistId,
-      reservation: data.reservationId,
       diagnosis: data.diagnosis,
       treatment: data.treatment,
       notes: data.notes,
-      vitalSigns: data.vitalSigns,
+      weight: data.vitalSigns?.weight,
+      height: data.vitalSigns?.height,
+      bloodPressure: data.vitalSigns?.bloodPressure,
+      heartRate: data.vitalSigns?.heartRate,
+      temperature: data.vitalSigns?.temperature,
     });
 
     return clinicalRecord;
+  }
+
+  async getClinicalRecords(filter: {
+    patientId?: string;
+    specialistId?: string;
+    businessId?: string;
+  }) {
+    const query: Record<string, unknown> = {};
+
+    if (filter.patientId) query.user = filter.patientId;
+    if (filter.specialistId) query.specialist = filter.specialistId;
+    if (filter.businessId) query.business = filter.businessId;
+
+    const records = await ClinicalRecord.find(query)
+      .populate('user', 'name email phone')
+      .populate('business', 'name')
+      .populate('specialist')
+      .sort({ createdAt: -1 });
+
+    return records;
   }
 
   async getClinicalRecordById(recordId: string, userId: string, userRole: string) {
@@ -89,7 +111,7 @@ export class ClinicalRecordService {
     const patientId = record.get('patient')?._id || record.get('patient');
     const isPatient = patientId?.toString() === userId;
     const isAdmin = userRole === 'admin';
-    
+
     if (!isPatient && !isAdmin) {
       // Check if user is the specialist
       const specialistId = record.get('specialist')?._id || record.get('specialist');
@@ -97,7 +119,7 @@ export class ClinicalRecordService {
         _id: specialistId,
         user: userId,
       });
-      
+
       if (!specialist) {
         throw new Error('Unauthorized to view this clinical record');
       }
@@ -106,7 +128,13 @@ export class ClinicalRecordService {
     return record;
   }
 
-  async getClinicalRecordsByPatient(patientId: string, requestingUserId: string, userRole: string, page = 1, limit = 10) {
+  async getClinicalRecordsByPatient(
+    patientId: string,
+    requestingUserId: string,
+    userRole: string,
+    page = 1,
+    limit = 10
+  ) {
     // Check authorization - only patient themselves, their specialists, or admins can view
     const isPatient = patientId === requestingUserId;
     const isAdmin = userRole === 'admin';
@@ -116,14 +144,14 @@ export class ClinicalRecordService {
     }
 
     const skip = (page - 1) * limit;
-    const records = await ClinicalRecord.find({ patient: patientId })
+    const records = await ClinicalRecord.find({ user: patientId })
       .populate('business', 'name')
       .populate('specialist')
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit);
 
-    const total = await ClinicalRecord.countDocuments({ patient: patientId });
+    const total = await ClinicalRecord.countDocuments({ user: patientId });
 
     return {
       records,
@@ -168,20 +196,27 @@ export class ClinicalRecordService {
     };
   }
 
-  async updateClinicalRecord(recordId: string, userId: string, data: UpdateClinicalRecordData) {
+  async updateClinicalRecord(
+    recordId: string,
+    userId: string,
+    userRole: string,
+    data: UpdateClinicalRecordData
+  ) {
     const record = await ClinicalRecord.findById(recordId);
     if (!record) {
       throw new Error('Clinical record not found');
     }
 
-    // Verify user is the specialist who created the record
-    const specialist = await Specialist.findOne({
-      _id: record.specialist,
-      user: userId,
-    });
+    // Verify user is the specialist who created the record or admin
+    if (userRole !== 'admin') {
+      const specialist = await Specialist.findOne({
+        _id: record.specialist,
+        user: userId,
+      });
 
-    if (!specialist) {
-      throw new Error('Unauthorized to update this clinical record');
+      if (!specialist) {
+        throw new Error('Unauthorized to update this clinical record');
+      }
     }
 
     // Update fields
@@ -254,14 +289,14 @@ export class ClinicalRecordService {
     const patientId = record.get('patient');
     const isPatient = patientId?.toString() === userId;
     const isAdmin = userRole === 'admin';
-    
+
     if (!isPatient && !isAdmin) {
       const specialistId = record.get('specialist');
       const specialist = await Specialist.findOne({
         _id: specialistId,
         user: userId,
       });
-      
+
       if (!specialist) {
         throw new Error('Unauthorized to view attachments');
       }

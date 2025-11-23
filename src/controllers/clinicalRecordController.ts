@@ -1,7 +1,9 @@
 import { Request, Response, NextFunction } from 'express';
-import { ClinicalRecord } from '../models/ClinicalRecord.js';
+import { ClinicalRecordService } from '../services/clinicalRecordService.js';
 import { Specialist } from '../models/Specialist.js';
 import { AppError } from '../middleware/errorHandler.js';
+
+const clinicalRecordService = new ClinicalRecordService();
 
 export const createClinicalRecord = async (
   req: Request,
@@ -9,39 +11,55 @@ export const createClinicalRecord = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    // Only specialists can create clinical records
     if (req.user?.role !== 'specialist' && req.user?.role !== 'admin') {
       throw new AppError('Only specialists can create clinical records', 403);
     }
 
     let specialistId = req.body.specialist;
 
-    // If specialist is creating the record, use their ID
     if (req.user.role === 'specialist') {
       const specialist = await Specialist.findOne({ user: req.user.userId });
       if (!specialist) {
         throw new AppError('Specialist profile not found', 404);
       }
-      specialistId = specialist._id;
+      specialistId = specialist._id.toString();
     }
 
-    const clinicalRecord = await ClinicalRecord.create({
-      ...req.body,
-      specialist: specialistId,
-    });
+    const clinicalRecord = await clinicalRecordService.createClinicalRecord(
+      req.user.userId.toString(),
+      {
+        patientId: req.body.user,
+        businessId: req.body.business,
+        specialistId,
+        diagnosis: req.body.diagnosis,
+        treatment: req.body.treatment,
+        notes: req.body.notes,
+        vitalSigns: req.body.vitalSigns,
+      }
+    );
 
-    const populatedRecord = await ClinicalRecord.findById(clinicalRecord._id)
-      .populate('user', 'name email')
-      .populate('specialist')
-      .populate('business', 'name')
-      .populate('attachments');
+    const populatedRecord = await clinicalRecordService.getClinicalRecordById(
+      clinicalRecord._id.toString(),
+      req.user.userId.toString(),
+      req.user.role
+    );
 
     res.status(201).json({
       status: 'success',
       data: { clinicalRecord: populatedRecord },
     });
   } catch (error) {
-    next(error);
+    if (error instanceof Error) {
+      if (error.message.includes('not found')) {
+        next(new AppError(error.message, 404));
+      } else if (error.message.includes('unauthorized')) {
+        next(new AppError(error.message, 403));
+      } else {
+        next(error);
+      }
+    } else {
+      next(error);
+    }
   }
 };
 
@@ -51,23 +69,30 @@ export const getClinicalRecords = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const { userId } = req.query;
-    
-    const filter: any = {};
+    const { patient, specialist, business } = req.query;
+    const userId = req.user?.userId;
+    const userRole = req.user?.role;
 
-    // Clients can only see their own records
-    if (req.user?.role === 'client') {
-      filter.user = req.user.userId;
-    } else if (userId) {
-      filter.user = userId;
+    if (!userId) {
+      throw new AppError('Unauthorized', 401);
     }
 
-    const records = await ClinicalRecord.find(filter)
-      .populate('user', 'name email')
-      .populate('specialist')
-      .populate('business', 'name')
-      .populate('attachments')
-      .sort({ createdAt: -1 });
+    const filter: Record<string, unknown> = {};
+
+    if (userRole === 'client') {
+      filter.patientId = userId.toString();
+    } else if (userRole === 'specialist') {
+      const specialistDoc = await Specialist.findOne({ user: userId });
+      if (specialistDoc) {
+        filter.specialistId = specialistDoc._id.toString();
+      }
+    }
+
+    if (patient) filter.patientId = patient as string;
+    if (specialist) filter.specialistId = specialist as string;
+    if (business) filter.businessId = business as string;
+
+    const records = await clinicalRecordService.getClinicalRecords(filter);
 
     res.status(200).json({
       status: 'success',
@@ -85,30 +110,37 @@ export const getClinicalRecordById = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const record = await ClinicalRecord.findById(req.params.id)
-      .populate('user', 'name email')
-      .populate('specialist')
-      .populate('business', 'name')
-      .populate('attachments');
+    const userId = req.user?.userId;
+    const userRole = req.user?.role;
 
-    if (!record) {
-      throw new AppError('Clinical record not found', 404);
+    if (!userId) {
+      throw new AppError('Unauthorized', 401);
     }
 
-    // Authorization: user can see their own, specialists and admins can see all
-    if (
-      req.user?.role === 'client' &&
-      record.user._id.toString() !== req.user.userId.toString()
-    ) {
-      throw new AppError('Not authorized to view this record', 403);
-    }
+    const clinicalRecord = await clinicalRecordService.getClinicalRecordById(
+      req.params.id,
+      userId.toString(),
+      userRole || 'client'
+    );
 
     res.status(200).json({
       status: 'success',
-      data: { clinicalRecord: record },
+      data: { clinicalRecord },
     });
   } catch (error) {
-    next(error);
+    if (error instanceof Error) {
+      if (error.message.includes('Invalid')) {
+        next(new AppError('Invalid clinical record ID', 400));
+      } else if (error.message.includes('not found')) {
+        next(new AppError('Clinical record not found', 404));
+      } else if (error.message.includes('Unauthorized')) {
+        next(new AppError('Not authorized to view this record', 403));
+      } else {
+        next(error);
+      }
+    } else {
+      next(error);
+    }
   }
 };
 
@@ -118,35 +150,37 @@ export const updateClinicalRecord = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const record = await ClinicalRecord.findById(req.params.id);
+    const userId = req.user?.userId;
+    const userRole = req.user?.role;
 
-    if (!record) {
-      throw new AppError('Clinical record not found', 404);
+    if (!userId) {
+      throw new AppError('Unauthorized', 401);
     }
 
-    // Only the specialist who created it or admin can update
-    if (req.user?.role === 'specialist') {
-      const specialist = await Specialist.findOne({ user: req.user.userId });
-      if (specialist && record.specialist.toString() !== specialist._id.toString()) {
-        throw new AppError('Not authorized to update this record', 403);
-      }
-    }
-
-    const updatedRecord = await ClinicalRecord.findByIdAndUpdate(
+    const updatedRecord = await clinicalRecordService.updateClinicalRecord(
       req.params.id,
-      req.body,
-      { new: true, runValidators: true }
-    )
-      .populate('user', 'name email')
-      .populate('specialist')
-      .populate('business', 'name')
-      .populate('attachments');
+      userId.toString(),
+      userRole || 'client',
+      req.body
+    );
 
     res.status(200).json({
       status: 'success',
       data: { clinicalRecord: updatedRecord },
     });
   } catch (error) {
-    next(error);
+    if (error instanceof Error) {
+      if (error.message.includes('Invalid')) {
+        next(new AppError('Invalid clinical record ID', 400));
+      } else if (error.message.includes('not found')) {
+        next(new AppError('Clinical record not found', 404));
+      } else if (error.message.includes('Unauthorized')) {
+        next(new AppError('Not authorized to update this record', 403));
+      } else {
+        next(error);
+      }
+    } else {
+      next(error);
+    }
   }
 };

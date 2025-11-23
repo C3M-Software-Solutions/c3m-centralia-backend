@@ -4,11 +4,9 @@ import { AppError } from './errorHandler.js';
 import { User } from '../models/User.js';
 
 // Extend Express Request type to include user
-declare global {
-  namespace Express {
-    interface Request {
-      user?: JwtPayload & { _id: string };
-    }
+declare module 'express-serve-static-core' {
+  interface Request {
+    user?: JwtPayload & { _id: string };
   }
 }
 
