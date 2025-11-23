@@ -423,6 +423,10 @@ const options: swaggerJsdoc.Options = {
         name: 'Clinical Records',
         description: 'Medical records endpoints',
       },
+      {
+        name: 'Upload',
+        description: 'File upload and management endpoints (supports local, S3, and Cloudinary)',
+      },
     ],
   },
   apis: ['./src/routes/*.ts'], // Path to the API routes

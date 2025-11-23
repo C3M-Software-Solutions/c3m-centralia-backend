@@ -98,10 +98,9 @@ export class ClinicalRecordService {
 
   async getClinicalRecordById(recordId: string, userId: string, userRole: string) {
     const record = await ClinicalRecord.findById(recordId)
-      .populate('patient', 'name email phone')
+      .populate('user', 'name email phone')
       .populate('business', 'name')
-      .populate('specialist')
-      .populate('reservation');
+      .populate('specialist');
 
     if (!record) {
       throw new Error('Clinical record not found');

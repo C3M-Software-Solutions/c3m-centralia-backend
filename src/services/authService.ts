@@ -41,13 +41,13 @@ export class AuthService {
 
     // Generate tokens
     const accessToken = generateAccessToken({
-      userId: user._id,
+      userId: user._id.toString(),
       email: user.email,
       role: user.role,
     });
 
     const refreshToken = generateRefreshToken({
-      userId: user._id,
+      userId: user._id.toString(),
       email: user.email,
       role: user.role,
     });
@@ -79,13 +79,13 @@ export class AuthService {
 
     // Generate tokens
     const accessToken = generateAccessToken({
-      userId: user._id,
+      userId: user._id.toString(),
       email: user.email,
       role: user.role,
     });
 
     const refreshToken = generateRefreshToken({
-      userId: user._id,
+      userId: user._id.toString(),
       email: user.email,
       role: user.role,
     });

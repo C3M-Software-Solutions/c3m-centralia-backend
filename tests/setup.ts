@@ -1,10 +1,37 @@
 import { MongoMemoryServer } from 'mongodb-memory-server';
 import mongoose from 'mongoose';
+import express, { Express } from 'express';
+import {
+  authRoutes,
+  businessRoutes,
+  reservationRoutes,
+  clinicalRecordRoutes,
+  uploadRoutes,
+} from '../src/routes/index.js';
+import { errorHandler } from '../src/middleware/errorHandler.js';
 
 let mongoServer: MongoMemoryServer;
 
+// Create test app with all routes
+export const createTestApp = (): Express => {
+  const app = express();
+  app.use(express.json());
+  app.use('/api/auth', authRoutes);
+  app.use('/api/businesses', businessRoutes);
+  app.use('/api/reservations', reservationRoutes);
+  app.use('/api/clinical-records', clinicalRecordRoutes);
+  app.use('/api/upload', uploadRoutes);
+  app.use(errorHandler);
+  return app;
+};
+
 // Setup before all tests
 beforeAll(async () => {
+  // Close any existing connections first
+  if (mongoose.connection.readyState !== 0) {
+    await mongoose.disconnect();
+  }
+
   // Start in-memory MongoDB
   mongoServer = await MongoMemoryServer.create();
   const mongoUri = mongoServer.getUri();

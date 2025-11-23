@@ -1,9 +1,8 @@
 import jwt from 'jsonwebtoken';
 import { config } from '../config/index.js';
-import { Types } from 'mongoose';
 
 export interface JwtPayload {
-  userId: string | Types.ObjectId;
+  userId: string;
   email: string;
   role: string;
 }

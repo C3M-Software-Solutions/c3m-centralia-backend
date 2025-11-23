@@ -3,6 +3,7 @@ import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
 import dotenv from 'dotenv';
+import path from 'path';
 import swaggerUi from 'swagger-ui-express';
 import { connectDatabase } from './config/database.js';
 import { config } from './config/index.js';
@@ -29,6 +30,9 @@ app.use(
 app.use(morgan('dev')); // Logging
 app.use(express.json({ limit: '10mb' })); // Body parser
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// Serve uploaded files (only for local storage)
+app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
 
 // Swagger Documentation
 app.use(
@@ -66,7 +70,7 @@ app.get('/api', (_req: Request, res: Response) => {
       specialists: '/api/specialists',
       reservations: '/api/reservations',
       clinicalRecords: '/api/clinical-records',
-      attachments: '/api/attachments',
+      upload: '/api/upload',
     },
   });
 });
@@ -77,12 +81,14 @@ import {
   businessRoutes,
   reservationRoutes,
   clinicalRecordRoutes,
+  uploadRoutes,
 } from './routes/index.js';
 
 app.use('/api/auth', authRoutes);
 app.use('/api/businesses', businessRoutes);
 app.use('/api/reservations', reservationRoutes);
 app.use('/api/clinical-records', clinicalRecordRoutes);
+app.use('/api/upload', uploadRoutes);
 
 // Error handling
 app.use(notFound);
