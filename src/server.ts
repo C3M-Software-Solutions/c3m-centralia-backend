@@ -124,10 +124,14 @@ import {
   reservationRoutes,
   clinicalRecordRoutes,
   uploadRoutes,
+  serviceRoutes,
+  specialistRoutes,
 } from './routes/index.js';
 
 app.use('/api/auth', authRoutes);
 app.use('/api/businesses', businessRoutes);
+app.use('/api/businesses/:businessId/services', serviceRoutes);
+app.use('/api/businesses/:businessId/specialists', specialistRoutes);
 app.use('/api/reservations', reservationRoutes);
 app.use('/api/clinical-records', clinicalRecordRoutes);
 app.use('/api/upload', uploadRoutes);
