@@ -35,15 +35,27 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
 
 // Swagger Documentation
-app.use(
-  '/api-docs',
-  swaggerUi.serve,
-  swaggerUi.setup(swaggerSpec, {
-    explorer: true,
-    customCss: '.swagger-ui .topbar { display: none }',
-    customSiteTitle: 'C3M Centralia API Documentation',
-  })
-);
+// Use CDN for static assets in production/Vercel to avoid MIME type issues
+const swaggerUiOptions = {
+  explorer: true,
+  customCss: '.swagger-ui .topbar { display: none }',
+  customSiteTitle: 'C3M Centralia API Documentation',
+  swaggerOptions: {
+    persistAuthorization: true,
+  },
+  // Use CDN in serverless environments
+  customCssUrl: process.env.VERCEL
+    ? 'https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.10.5/swagger-ui.min.css'
+    : undefined,
+  customJs: process.env.VERCEL
+    ? [
+        'https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.10.5/swagger-ui-bundle.min.js',
+        'https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.10.5/swagger-ui-standalone-preset.min.js',
+      ]
+    : undefined,
+};
+
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, swaggerUiOptions));
 
 // Health check endpoint
 app.get('/health', (_req: Request, res: Response) => {
