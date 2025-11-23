@@ -22,8 +22,7 @@ connectDatabase();
 // Middleware
 app.use(
   helmet({
-    contentSecurityPolicy: false,
-    /*    contentSecurityPolicy: {
+    contentSecurityPolicy: {
       directives: {
         defaultSrc: ["'self'"],
         styleSrc: ["'self'", "'unsafe-inline'", 'https://cdnjs.cloudflare.com'],
@@ -31,9 +30,11 @@ app.use(
         imgSrc: ["'self'", 'data:', 'https:'],
         connectSrc: ["'self'"],
       },
-    }, */
+    },
   })
-); // Security headers
+);
+
+// Security headers
 app.use(
   cors({
     origin: config.server.corsOrigin,
