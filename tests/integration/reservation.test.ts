@@ -1,7 +1,6 @@
 import request from 'supertest';
 import { Express } from 'express';
 import mongoose from 'mongoose';
-import { MongoMemoryServer } from 'mongodb-memory-server';
 import { User } from '../../src/models/User.js';
 import { Business } from '../../src/models/Business.js';
 import { Specialist } from '../../src/models/Specialist.js';
@@ -10,25 +9,6 @@ import { Reservation } from '../../src/models/Reservation.js';
 import { generateAccessToken } from '../../src/utils/jwt.js';
 import { hashPassword } from '../../src/utils/password.js';
 import { createTestApp } from '../setup.js';
-
-let mongoServer: MongoMemoryServer;
-
-beforeAll(async () => {
-  mongoServer = await MongoMemoryServer.create();
-  await mongoose.connect(mongoServer.getUri());
-});
-
-afterAll(async () => {
-  await mongoose.disconnect();
-  await mongoServer.stop();
-});
-
-afterEach(async () => {
-  const collections = mongoose.connection.collections;
-  for (const key in collections) {
-    await collections[key].deleteMany({});
-  }
-});
 
 describe('Reservation Integration Tests', () => {
   let app: Express;

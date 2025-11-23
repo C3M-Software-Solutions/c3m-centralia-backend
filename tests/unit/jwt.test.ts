@@ -111,7 +111,7 @@ describe('JWT Utils Tests', () => {
 
     it('should preserve ObjectId format in userId', () => {
       const objectId = new Types.ObjectId();
-      const payload = { ...mockPayload, userId: objectId };
+      const payload = { ...mockPayload, userId: objectId.toString() };
       const token = generateAccessToken(payload);
       const decoded = verifyAccessToken(token);
 

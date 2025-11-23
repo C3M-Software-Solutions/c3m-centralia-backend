@@ -1,33 +1,14 @@
-import mongoose from 'mongoose';
-import { MongoMemoryServer } from 'mongodb-memory-server';
 import { Reservation } from '../../src/models/Reservation.js';
 import { User } from '../../src/models/User.js';
 import { Business } from '../../src/models/Business.js';
 import { Specialist } from '../../src/models/Specialist.js';
 import { Service } from '../../src/models/Service.js';
-
-let mongoServer: MongoMemoryServer;
-
-beforeAll(async () => {
-  mongoServer = await MongoMemoryServer.create();
-  await mongoose.connect(mongoServer.getUri());
-});
-
-afterAll(async () => {
-  await mongoose.disconnect();
-  await mongoServer.stop();
-});
-
-afterEach(async () => {
-  const collections = mongoose.connection.collections;
-  for (const key in collections) {
-    await collections[key].deleteMany({});
-  }
-});
+import type { IUser } from '../../src/models/User.js';
+import type { IBusiness } from '../../src/models/Business.js';
 
 describe('Reservation Model Tests', () => {
-  let user: any;
-  let business: any;
+  let user: IUser;
+  let business: IBusiness;
   let specialist: any;
   let service: any;
 
@@ -113,6 +94,7 @@ describe('Reservation Model Tests', () => {
 
     it('should allow valid status values', async () => {
       const statuses = ['pending', 'confirmed', 'cancelled', 'completed', 'no-show'];
+      const testStartDate = new Date();
 
       for (const status of statuses) {
         const reservation = await Reservation.create({
@@ -120,8 +102,8 @@ describe('Reservation Model Tests', () => {
           business: business._id,
           specialist: specialist._id,
           service: service._id,
-          startDate,
-          endDate: new Date(startDate.getTime() + 60 * 60000),
+          startDate: testStartDate,
+          endDate: new Date(testStartDate.getTime() + 60 * 60000),
           status,
         });
         expect(reservation.status).toBe(status);
@@ -168,8 +150,8 @@ describe('Reservation Model Tests', () => {
         .populate('service');
 
       expect(populated?.user).toBeDefined();
-      expect((populated?.user as any).name).toBe('Test User');
-      expect((populated?.business as any).name).toBe('Test Business');
+      expect((populated?.user as unknown as IUser).name).toBe('Test User');
+      expect((populated?.business as unknown as IBusiness).name).toBe('Test Business');
       expect(populated?.service).toBeDefined();
     });
   });
