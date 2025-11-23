@@ -62,12 +62,7 @@ const swaggerUiOptions = {
   ],
 };
 
-// Don't use swaggerUi.serve to avoid static file issues
-app.get('/api-docs', (_req: Request, res: Response) => {
-  res.redirect('/api-docs/');
-});
-
-app.use('/api-docs/', swaggerUi.setup(swaggerSpec, swaggerUiOptions));
+app.use('/api-docs', swaggerUi.setup(swaggerSpec, swaggerUiOptions));
 
 // Root route
 app.get('/', (_req: Request, res: Response) => {
