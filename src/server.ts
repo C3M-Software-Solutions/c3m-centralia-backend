@@ -6,7 +6,7 @@ import dotenv from 'dotenv';
 import path from 'path';
 import swaggerUi from 'swagger-ui-express';
 import { connectDatabase } from './config/database.js';
-// import { config } from './config/index.js';
+import { config } from './config/index.js';
 import { errorHandler, notFound } from './middleware/errorHandler.js';
 import { swaggerSpec } from './swagger.js';
 
@@ -22,21 +22,22 @@ connectDatabase();
 // Middleware
 app.use(
   helmet({
-    contentSecurityPolicy: {
-      /* directives: {
+    contentSecurityPolicy: false,
+    /*    contentSecurityPolicy: {
+      directives: {
         defaultSrc: ["'self'"],
         styleSrc: ["'self'", "'unsafe-inline'", 'https://cdnjs.cloudflare.com'],
         scriptSrc: ["'self'", 'https://cdnjs.cloudflare.com'],
         imgSrc: ["'self'", 'data:', 'https:'],
         connectSrc: ["'self'"],
-      }, */
-    },
+      },
+    }, */
   })
 ); // Security headers
 app.use(
   cors({
-    /* origin: config.server.corsOrigin,
-    credentials: true, */
+    origin: config.server.corsOrigin,
+    credentials: true,
   })
 );
 app.use(morgan('dev')); // Logging
@@ -52,8 +53,8 @@ app.use(
   swaggerUi.serve,
   swaggerUi.setup(swaggerSpec, {
     explorer: true,
-    customCss: '.swagger-ui .topbar { display: none }',
     customSiteTitle: 'C3M Centralia API Documentation',
+    customCssUrl: 'https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/4.18.2/swagger-ui.css',
   })
 );
 
