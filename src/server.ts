@@ -47,22 +47,15 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
 
 // Swagger Documentation
-// Always use CDN to avoid static file serving issues in serverless
-const swaggerUiOptions = {
-  explorer: true,
-  customCss: '.swagger-ui .topbar { display: none }',
-  customSiteTitle: 'C3M Centralia API Documentation',
-  swaggerOptions: {
-    persistAuthorization: true,
-  },
-  customCssUrl: 'https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.10.5/swagger-ui.min.css',
-  customJs: [
-    'https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.10.5/swagger-ui-bundle.min.js',
-    'https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.10.5/swagger-ui-standalone-preset.min.js',
-  ],
-};
-
-app.use('/api-docs', swaggerUi.setup(swaggerSpec, swaggerUiOptions));
+app.use(
+  '/api-docs',
+  swaggerUi.serve,
+  swaggerUi.setup(swaggerSpec, {
+    explorer: true,
+    customCss: '.swagger-ui .topbar { display: none }',
+    customSiteTitle: 'C3M Centralia API Documentation',
+  })
+);
 
 // Root route
 app.get('/', (_req: Request, res: Response) => {
@@ -131,16 +124,5 @@ app.use('/api/upload', uploadRoutes);
 // Error handling
 app.use(notFound);
 app.use(errorHandler);
-
-// Start server only if not in Vercel
-if (process.env.VERCEL !== '1') {
-  const PORT = config.server.port;
-
-  app.listen(PORT, () => {
-    console.log(`🚀 Server running on port ${PORT}`);
-    console.log(`📝 Environment: ${config.server.nodeEnv}`);
-    console.log(`🔗 API available at http://localhost:${PORT}/api`);
-  });
-}
 
 export default app;

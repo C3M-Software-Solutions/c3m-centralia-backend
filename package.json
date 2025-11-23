@@ -5,9 +5,12 @@
   "license": "ISC",
   "author": "",
   "type": "module",
-  "main": "dist/server.js",
+  "main": "dist/index.js",
+  "scarfSettings": {
+    "enabled": false
+  },
   "scripts": {
-    "dev": "tsx watch src/server.ts",
+    "dev": "tsx watch src/index.ts",
     "build": "tsc",
     "vercel-build": "tsc",
     "start": "node dist/index.js",
