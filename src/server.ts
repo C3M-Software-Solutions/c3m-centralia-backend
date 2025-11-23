@@ -6,7 +6,7 @@ import dotenv from 'dotenv';
 import path from 'path';
 import swaggerUi from 'swagger-ui-express';
 import { connectDatabase } from './config/database.js';
-import { config } from './config/index.js';
+// import { config } from './config/index.js';
 import { errorHandler, notFound } from './middleware/errorHandler.js';
 import { swaggerSpec } from './swagger.js';
 
@@ -35,8 +35,8 @@ app.use(
 ); // Security headers
 app.use(
   cors({
-    origin: config.server.corsOrigin,
-    credentials: true,
+    /* origin: config.server.corsOrigin,
+    credentials: true, */
   })
 );
 app.use(morgan('dev')); // Logging
