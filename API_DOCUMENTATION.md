@@ -1,12 +1,15 @@
 # C3M Centralia API Documentation
 
 ## Base URL
+
 ```
 http://localhost:5000/api
 ```
 
 ## Authentication
+
 All protected endpoints require a JWT token in the Authorization header:
+
 ```
 Authorization: Bearer <token>
 ```
@@ -16,11 +19,13 @@ Authorization: Bearer <token>
 ## Authentication Endpoints
 
 ### Register User
+
 ```http
 POST /api/auth/register
 ```
 
 **Request Body:**
+
 ```json
 {
   "name": "John Doe",
@@ -32,6 +37,7 @@ POST /api/auth/register
 ```
 
 **Response:**
+
 ```json
 {
   "status": "success",
@@ -49,11 +55,13 @@ POST /api/auth/register
 ```
 
 ### Login
+
 ```http
 POST /api/auth/login
 ```
 
 **Request Body:**
+
 ```json
 {
   "email": "john@example.com",
@@ -62,6 +70,7 @@ POST /api/auth/login
 ```
 
 **Response:**
+
 ```json
 {
   "status": "success",
@@ -79,11 +88,13 @@ POST /api/auth/login
 ```
 
 ### Refresh Token
+
 ```http
 POST /api/auth/refresh
 ```
 
 **Request Body:**
+
 ```json
 {
   "refreshToken": "..."
@@ -91,6 +102,7 @@ POST /api/auth/refresh
 ```
 
 **Response:**
+
 ```json
 {
   "status": "success",
@@ -102,12 +114,15 @@ POST /api/auth/refresh
 ```
 
 ### Get Current User
+
 ```http
 GET /api/auth/me
 ```
-*Requires authentication*
+
+_Requires authentication_
 
 **Response:**
+
 ```json
 {
   "status": "success",
@@ -128,12 +143,15 @@ GET /api/auth/me
 ## Business Endpoints
 
 ### Create Business
+
 ```http
 POST /api/businesses
 ```
-*Requires authentication*
+
+_Requires authentication_
 
 **Request Body:**
+
 ```json
 {
   "name": "Wellness Center",
@@ -147,66 +165,81 @@ POST /api/businesses
 ```
 
 ### Get All Businesses
+
 ```http
 GET /api/businesses
 ```
 
 **Query Parameters:**
+
 - `userId` (optional): Filter by user ID
 - `page` (optional): Page number (default: 1)
 - `limit` (optional): Items per page (default: 10)
 
 ### Get Single Business
+
 ```http
 GET /api/businesses/:id
 ```
 
 ### Update Business
+
 ```http
 PUT /api/businesses/:id
 ```
-*Requires authentication and ownership/admin*
+
+_Requires authentication and ownership/admin_
 
 ### Delete Business
+
 ```http
 DELETE /api/businesses/:id
 ```
-*Requires authentication and ownership/admin*
+
+_Requires authentication and ownership/admin_
 
 ### Get Business Services
+
 ```http
 GET /api/businesses/:id/services
 ```
 
 ### Create Business Service
+
 ```http
 POST /api/businesses/:id/services
 ```
-*Requires authentication*
+
+_Requires authentication_
 
 **Request Body:**
+
 ```json
 {
   "name": "Massage Therapy",
   "durationMinutes": 60,
-  "price": 75.00,
+  "price": 75.0,
   "description": "Relaxing full body massage",
   "active": true
 }
 ```
 
 ### Get Business Specialists
+
 ```http
 GET /api/businesses/:id/specialists
 ```
 
 ### Create Business Specialist
+
 ```http
 POST /api/businesses/:id/specialists
 ```
-*Requires authentication*
+
+_Requires authentication_
 
 **Request Body:**
+
 ```json
 {
   "userId": "...",
@@ -227,16 +260,19 @@ POST /api/businesses/:id/specialists
 ## Reservation Endpoints
 
 ### Check Availability
+
 ```http
 GET /api/reservations/availability
 ```
 
 **Query Parameters:**
+
 - `specialistId` (required): Specialist ID
 - `serviceId` (optional): Service ID
 - `date` (required): Date in ISO format (YYYY-MM-DD)
 
 **Response:**
+
 ```json
 {
   "status": "success",
@@ -252,12 +288,15 @@ GET /api/reservations/availability
 ```
 
 ### Create Reservation
+
 ```http
 POST /api/reservations
 ```
-*Requires authentication*
+
+_Requires authentication_
 
 **Request Body:**
+
 ```json
 {
   "businessId": "...",
@@ -269,12 +308,15 @@ POST /api/reservations
 ```
 
 ### Get All Reservations
+
 ```http
 GET /api/reservations
 ```
-*Requires authentication*
+
+_Requires authentication_
 
 **Query Parameters:**
+
 - `userId` (optional): Filter by user
 - `businessId` (optional): Filter by business
 - `specialistId` (optional): Filter by specialist
@@ -283,18 +325,23 @@ GET /api/reservations
 - `endDate` (optional): Filter to date
 
 ### Get Single Reservation
+
 ```http
 GET /api/reservations/:id
 ```
-*Requires authentication*
+
+_Requires authentication_
 
 ### Update Reservation
+
 ```http
 PUT /api/reservations/:id
 ```
-*Requires authentication and authorization*
+
+_Requires authentication and authorization_
 
 **Request Body:**
+
 ```json
 {
   "status": "confirmed",
@@ -303,22 +350,27 @@ PUT /api/reservations/:id
 ```
 
 ### Cancel Reservation
+
 ```http
 DELETE /api/reservations/:id
 ```
-*Requires authentication and authorization*
+
+_Requires authentication and authorization_
 
 ---
 
 ## Clinical Records Endpoints
 
 ### Create Clinical Record
+
 ```http
 POST /api/clinical-records
 ```
-*Requires authentication (specialist or admin)*
+
+_Requires authentication (specialist or admin)_
 
 **Request Body:**
+
 ```json
 {
   "patientId": "...",
@@ -334,30 +386,39 @@ POST /api/clinical-records
 ```
 
 ### Get Patient Clinical Records
+
 ```http
 GET /api/clinical-records/patient/:patientId
 ```
-*Requires authentication (patient can see own, specialist/admin can see all)*
+
+_Requires authentication (patient can see own, specialist/admin can see all)_
 
 ### Get Single Clinical Record
+
 ```http
 GET /api/clinical-records/:id
 ```
-*Requires authentication*
+
+_Requires authentication_
 
 ### Update Clinical Record
+
 ```http
 PUT /api/clinical-records/:id
 ```
-*Requires authentication (specialist or admin)*
+
+_Requires authentication (specialist or admin)_
 
 ### Add Attachment to Clinical Record
+
 ```http
 POST /api/clinical-records/:id/attachments
 ```
-*Requires authentication*
+
+_Requires authentication_
 
 **Request Body:**
+
 ```json
 {
   "url": "https://s3.amazonaws.com/...",
@@ -370,10 +431,12 @@ POST /api/clinical-records/:id/attachments
 ```
 
 ### Get Clinical Record Attachments
+
 ```http
 GET /api/clinical-records/:id/attachments
 ```
-*Requires authentication*
+
+_Requires authentication_
 
 ---
 
@@ -382,6 +445,7 @@ GET /api/clinical-records/:id/attachments
 All endpoints may return the following error responses:
 
 ### 400 Bad Request
+
 ```json
 {
   "status": "error",
@@ -396,6 +460,7 @@ All endpoints may return the following error responses:
 ```
 
 ### 401 Unauthorized
+
 ```json
 {
   "status": "error",
@@ -404,6 +469,7 @@ All endpoints may return the following error responses:
 ```
 
 ### 403 Forbidden
+
 ```json
 {
   "status": "error",
@@ -412,6 +478,7 @@ All endpoints may return the following error responses:
 ```
 
 ### 404 Not Found
+
 ```json
 {
   "status": "error",
@@ -420,6 +487,7 @@ All endpoints may return the following error responses:
 ```
 
 ### 409 Conflict
+
 ```json
 {
   "status": "error",
@@ -428,6 +496,7 @@ All endpoints may return the following error responses:
 ```
 
 ### 500 Internal Server Error
+
 ```json
 {
   "status": "error",
@@ -448,6 +517,7 @@ All endpoints may return the following error responses:
 ## Rate Limiting
 
 API requests are limited to prevent abuse. Current limits:
+
 - 100 requests per 15 minutes per IP address
 - 1000 requests per hour per authenticated user
 
@@ -456,10 +526,12 @@ API requests are limited to prevent abuse. Current limits:
 ## Pagination
 
 List endpoints support pagination with the following query parameters:
+
 - `page`: Page number (default: 1)
 - `limit`: Items per page (default: 10, max: 100)
 
 Response format:
+
 ```json
 {
   "status": "success",

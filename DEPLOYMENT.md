@@ -81,21 +81,25 @@ openssl rand -hex 64
 ## Deployment Options
 
 ### Option 1: Traditional Server (VPS/Dedicated)
+
 - **Pros**: Full control, cost-effective for scale
 - **Cons**: More maintenance, requires DevOps knowledge
 - **Best for**: Production apps with specific requirements
 
 ### Option 2: Platform as a Service (Heroku, Railway)
+
 - **Pros**: Easy deployment, managed infrastructure
 - **Cons**: Can be expensive at scale
 - **Best for**: MVP, rapid prototyping
 
 ### Option 3: Container Platform (AWS ECS, Google Cloud Run)
+
 - **Pros**: Scalable, modern architecture
 - **Cons**: More complex setup
 - **Best for**: Scalable production applications
 
 ### Option 4: Serverless (AWS Lambda, Vercel)
+
 - **Pros**: Auto-scaling, pay-per-use
 - **Cons**: Cold starts, platform limitations
 - **Best for**: Variable traffic patterns
@@ -131,6 +135,7 @@ openssl rand -hex 64
 4. Replace `<password>` with your database user password
 
 Example:
+
 ```
 mongodb+srv://admin:<password>@cluster0.xxxxx.mongodb.net/c3m_centralia?retryWrites=true&w=majority
 ```
@@ -446,7 +451,7 @@ services:
   api:
     build: .
     ports:
-      - "5000:5000"
+      - '5000:5000'
     environment:
       - NODE_ENV=production
       - MONGODB_URI=${MONGODB_URI}
@@ -460,7 +465,7 @@ services:
   mongodb:
     image: mongo:8
     ports:
-      - "27017:27017"
+      - '27017:27017'
     volumes:
       - mongodb_data:/data/db
     environment:
@@ -538,6 +543,7 @@ pm2 monit
 #### Setup External Monitoring
 
 Consider these services:
+
 - **Uptime monitoring**: UptimeRobot, Pingdom
 - **Error tracking**: Sentry, Rollbar
 - **Performance**: New Relic, Datadog
@@ -628,12 +634,14 @@ pm2 restart c3m-api
 ### Security Best Practices
 
 1. **Keep dependencies updated**
+
    ```bash
    npm audit
    npm update
    ```
 
 2. **Enable firewall**
+
    ```bash
    sudo ufw enable
    sudo ufw allow ssh
@@ -642,6 +650,7 @@ pm2 restart c3m-api
    ```
 
 3. **Setup fail2ban** (prevents brute force)
+
    ```bash
    sudo apt install fail2ban
    sudo systemctl enable fail2ban
@@ -735,6 +744,7 @@ pm2 restart c3m-api
 ## Support
 
 For issues and questions:
+
 - GitHub Issues: [your-repo-url]
 - Email: support@yourdomain.com
 - Documentation: [docs-url]

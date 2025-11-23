@@ -16,6 +16,7 @@ docker-compose up -d
 ```
 
 This will start:
+
 - **MongoDB** on port `27017`
 - **API Server** on port `5000`
 - **Mongo Express** (MongoDB GUI) on port `8081`
@@ -46,12 +47,14 @@ docker-compose down -v
 ## Services
 
 ### API Server
+
 - **Port**: 5000
 - **URL**: http://localhost:5000
 - **Health Check**: http://localhost:5000/health
 - **API Docs**: http://localhost:5000/api-docs
 
 ### MongoDB
+
 - **Port**: 27017
 - **Username**: admin
 - **Password**: admin123
@@ -59,6 +62,7 @@ docker-compose down -v
 - **Connection String**: `mongodb://admin:admin123@localhost:27017/c3m_centralia?authSource=admin`
 
 ### Mongo Express (Database GUI)
+
 - **Port**: 8081
 - **URL**: http://localhost:8081
 - **Username**: admin
@@ -182,7 +186,7 @@ services:
       JWT_SECRET: ${JWT_SECRET}
       JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET}
     ports:
-      - "5000:5000"
+      - '5000:5000'
 ```
 
 Run:
@@ -198,6 +202,7 @@ docker-compose -f docker-compose.prod.yml up -d
 The docker-compose setup includes volume mounting for hot reload:
 
 1. Start services:
+
 ```bash
 docker-compose up
 ```
@@ -228,25 +233,28 @@ If ports are already in use, modify `docker-compose.yml`:
 services:
   api:
     ports:
-      - "5001:5000"  # Change external port
+      - '5001:5000' # Change external port
   mongodb:
     ports:
-      - "27018:27017"  # Change external port
+      - '27018:27017' # Change external port
 ```
 
 ### MongoDB connection issues
 
 1. Check MongoDB is running:
+
 ```bash
 docker-compose ps mongodb
 ```
 
 2. Check logs:
+
 ```bash
 docker-compose logs mongodb
 ```
 
 3. Wait for MongoDB health check to pass:
+
 ```bash
 docker-compose ps
 # Wait until mongodb shows "healthy"
@@ -265,11 +273,13 @@ docker-compose up -d
 ### API not starting
 
 1. Check logs:
+
 ```bash
 docker-compose logs api
 ```
 
 2. Check if MongoDB is ready:
+
 ```bash
 docker-compose exec mongodb mongosh -u admin -p admin123 --eval "db.adminCommand('ping')"
 ```

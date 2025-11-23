@@ -10,6 +10,7 @@ This guide provides examples for testing the C3M Centralia API.
 ## Quick Start
 
 ### 1. Start MongoDB
+
 ```bash
 # If using Docker
 docker run -d -p 27017:27017 --name mongodb mongo:latest
@@ -18,11 +19,13 @@ docker run -d -p 27017:27017 --name mongodb mongo:latest
 ```
 
 ### 2. Start the Server
+
 ```bash
 npm run dev
 ```
 
 ### 3. Test Health Endpoint
+
 ```bash
 curl http://localhost:5000/health
 ```
@@ -34,6 +37,7 @@ curl http://localhost:5000/health
 ### Authentication Flow
 
 #### 1. Register a new user
+
 ```bash
 curl -X POST http://localhost:5000/api/auth/register \
   -H "Content-Type: application/json" \
@@ -49,6 +53,7 @@ curl -X POST http://localhost:5000/api/auth/register \
 Save the `accessToken` from the response.
 
 #### 2. Login
+
 ```bash
 curl -X POST http://localhost:5000/api/auth/login \
   -H "Content-Type: application/json" \
@@ -59,6 +64,7 @@ curl -X POST http://localhost:5000/api/auth/login \
 ```
 
 #### 3. Get current user (authenticated)
+
 ```bash
 curl -X GET http://localhost:5000/api/auth/me \
   -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
@@ -67,6 +73,7 @@ curl -X GET http://localhost:5000/api/auth/me \
 ### Business Management
 
 #### 1. Create a business
+
 ```bash
 curl -X POST http://localhost:5000/api/businesses \
   -H "Content-Type: application/json" \
@@ -85,16 +92,19 @@ curl -X POST http://localhost:5000/api/businesses \
 Save the business `_id` from the response.
 
 #### 2. Get all businesses
+
 ```bash
 curl -X GET http://localhost:5000/api/businesses
 ```
 
 #### 3. Get single business
+
 ```bash
 curl -X GET http://localhost:5000/api/businesses/BUSINESS_ID
 ```
 
 #### 4. Update business
+
 ```bash
 curl -X PUT http://localhost:5000/api/businesses/BUSINESS_ID \
   -H "Content-Type: application/json" \
@@ -108,6 +118,7 @@ curl -X PUT http://localhost:5000/api/businesses/BUSINESS_ID \
 ### Services
 
 #### 1. Create a service
+
 ```bash
 curl -X POST http://localhost:5000/api/businesses/BUSINESS_ID/services \
   -H "Content-Type: application/json" \
@@ -124,6 +135,7 @@ curl -X POST http://localhost:5000/api/businesses/BUSINESS_ID/services \
 Save the service `_id` from the response.
 
 #### 2. Get business services
+
 ```bash
 curl -X GET http://localhost:5000/api/businesses/BUSINESS_ID/services
 ```
@@ -131,6 +143,7 @@ curl -X GET http://localhost:5000/api/businesses/BUSINESS_ID/services
 ### Specialists
 
 #### 1. Register a specialist
+
 ```bash
 curl -X POST http://localhost:5000/api/auth/register \
   -H "Content-Type: application/json" \
@@ -144,6 +157,7 @@ curl -X POST http://localhost:5000/api/auth/register \
 ```
 
 #### 2. Create specialist profile
+
 ```bash
 curl -X POST http://localhost:5000/api/businesses/BUSINESS_ID/specialists \
   -H "Content-Type: application/json" \
@@ -191,12 +205,14 @@ Save the specialist `_id` from the response.
 ### Reservations
 
 #### 1. Check availability
+
 ```bash
 curl -X GET "http://localhost:5000/api/reservations/availability?specialistId=SPECIALIST_ID&serviceId=SERVICE_ID&date=2024-12-25" \
   -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
 ```
 
 #### 2. Create a reservation
+
 ```bash
 curl -X POST http://localhost:5000/api/reservations \
   -H "Content-Type: application/json" \
@@ -213,18 +229,21 @@ curl -X POST http://localhost:5000/api/reservations \
 Save the reservation `_id` from the response.
 
 #### 3. Get user reservations
+
 ```bash
 curl -X GET "http://localhost:5000/api/reservations?userId=USER_ID" \
   -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
 ```
 
 #### 4. Get single reservation
+
 ```bash
 curl -X GET http://localhost:5000/api/reservations/RESERVATION_ID \
   -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
 ```
 
 #### 5. Update reservation (confirm)
+
 ```bash
 curl -X PUT http://localhost:5000/api/reservations/RESERVATION_ID \
   -H "Content-Type: application/json" \
@@ -235,6 +254,7 @@ curl -X PUT http://localhost:5000/api/reservations/RESERVATION_ID \
 ```
 
 #### 6. Cancel reservation
+
 ```bash
 curl -X DELETE http://localhost:5000/api/reservations/RESERVATION_ID \
   -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
@@ -243,6 +263,7 @@ curl -X DELETE http://localhost:5000/api/reservations/RESERVATION_ID \
 ### Clinical Records
 
 #### 1. Create a clinical record (as specialist)
+
 ```bash
 curl -X POST http://localhost:5000/api/clinical-records \
   -H "Content-Type: application/json" \
@@ -261,18 +282,21 @@ curl -X POST http://localhost:5000/api/clinical-records \
 ```
 
 #### 2. Get patient clinical records
+
 ```bash
 curl -X GET http://localhost:5000/api/clinical-records/patient/PATIENT_USER_ID \
   -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
 ```
 
 #### 3. Get single clinical record
+
 ```bash
 curl -X GET http://localhost:5000/api/clinical-records/RECORD_ID \
   -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
 ```
 
 #### 4. Update clinical record
+
 ```bash
 curl -X PUT http://localhost:5000/api/clinical-records/RECORD_ID \
   -H "Content-Type: application/json" \
@@ -284,6 +308,7 @@ curl -X PUT http://localhost:5000/api/clinical-records/RECORD_ID \
 ```
 
 #### 5. Add attachment to clinical record
+
 ```bash
 curl -X POST http://localhost:5000/api/clinical-records/RECORD_ID/attachments \
   -H "Content-Type: application/json" \
@@ -299,6 +324,7 @@ curl -X POST http://localhost:5000/api/clinical-records/RECORD_ID/attachments \
 ```
 
 #### 6. Get clinical record attachments
+
 ```bash
 curl -X GET http://localhost:5000/api/clinical-records/RECORD_ID/attachments \
   -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
@@ -470,6 +496,7 @@ Save this as `test-api.sh`, make it executable with `chmod +x test-api.sh`, and 
 ### Collection Variables
 
 Add these variables to your collection:
+
 - `baseUrl`: `http://localhost:5000`
 - `accessToken`: (will be set automatically from login)
 - `clientId`: (will be set from registration)
@@ -482,11 +509,11 @@ Add these variables to your collection:
 
 ```javascript
 // Auto-attach token if available
-if (pm.collectionVariables.get("accessToken")) {
-    pm.request.headers.add({
-        key: "Authorization",
-        value: "Bearer " + pm.collectionVariables.get("accessToken")
-    });
+if (pm.collectionVariables.get('accessToken')) {
+  pm.request.headers.add({
+    key: 'Authorization',
+    value: 'Bearer ' + pm.collectionVariables.get('accessToken'),
+  });
 }
 ```
 
@@ -495,13 +522,13 @@ if (pm.collectionVariables.get("accessToken")) {
 ```javascript
 // Save access token
 if (pm.response.code === 200 || pm.response.code === 201) {
-    var jsonData = pm.response.json();
-    if (jsonData.data && jsonData.data.accessToken) {
-        pm.collectionVariables.set("accessToken", jsonData.data.accessToken);
-    }
-    if (jsonData.data && jsonData.data.user && jsonData.data.user._id) {
-        pm.collectionVariables.set("userId", jsonData.data.user._id);
-    }
+  var jsonData = pm.response.json();
+  if (jsonData.data && jsonData.data.accessToken) {
+    pm.collectionVariables.set('accessToken', jsonData.data.accessToken);
+  }
+  if (jsonData.data && jsonData.data.user && jsonData.data.user._id) {
+    pm.collectionVariables.set('userId', jsonData.data.user._id);
+  }
 }
 ```
 
@@ -510,6 +537,7 @@ if (pm.response.code === 200 || pm.response.code === 201) {
 ## Environment Setup for Testing
 
 ### Development
+
 ```env
 NODE_ENV=development
 PORT=5000
@@ -517,6 +545,7 @@ MONGODB_URI=mongodb://localhost:27017/c3m_centralia
 ```
 
 ### Testing
+
 ```env
 NODE_ENV=test
 PORT=5001
@@ -543,25 +572,33 @@ npm run test:watch
 ## Common Issues
 
 ### 1. MongoDB Connection Error
+
 ```
 Error: connect ECONNREFUSED 127.0.0.1:27017
 ```
+
 **Solution**: Make sure MongoDB is running
 
 ### 2. JWT Invalid Token
+
 ```
 Error: jwt malformed
 ```
+
 **Solution**: Make sure you're using a fresh token from login/register
 
 ### 3. Validation Errors
+
 ```
 Error: Validation failed
 ```
+
 **Solution**: Check the request body matches the schema exactly
 
 ### 4. Reservation Conflict
+
 ```
 Error: Time slot is not available
 ```
+
 **Solution**: Check availability first and use an available time slot
