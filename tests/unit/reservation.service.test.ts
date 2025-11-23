@@ -1,38 +1,26 @@
 import mongoose from 'mongoose';
-import { MongoMemoryServer } from 'mongodb-memory-server';
 import { ReservationService } from '../../src/services/reservationService.js';
 import { Reservation } from '../../src/models/Reservation.js';
 import { User } from '../../src/models/User.js';
 import { Business } from '../../src/models/Business.js';
 import { Specialist } from '../../src/models/Specialist.js';
 import { Service } from '../../src/models/Service.js';
+import type { IUser } from '../../src/models/User.js';
+import type { IBusiness } from '../../src/models/Business.js';
+import type { ISpecialist } from '../../src/models/Specialist.js';
+import type { IService } from '../../src/models/Service.js';
 
-let mongoServer: MongoMemoryServer;
 let reservationService: ReservationService;
 
-beforeAll(async () => {
-  mongoServer = await MongoMemoryServer.create();
-  await mongoose.connect(mongoServer.getUri());
+beforeAll(() => {
   reservationService = new ReservationService();
 });
 
-afterAll(async () => {
-  await mongoose.disconnect();
-  await mongoServer.stop();
-});
-
-afterEach(async () => {
-  const collections = mongoose.connection.collections;
-  for (const key in collections) {
-    await collections[key].deleteMany({});
-  }
-});
-
 describe('ReservationService Tests', () => {
-  let user: any;
-  let business: any;
-  let specialist: any;
-  let service: any;
+  let user: IUser;
+  let business: IBusiness;
+  let specialist: ISpecialist;
+  let service: IService;
 
   beforeEach(async () => {
     user = await User.create({
