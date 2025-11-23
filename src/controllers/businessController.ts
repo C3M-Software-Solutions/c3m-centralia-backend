@@ -95,11 +95,7 @@ export const updateBusiness = async (
       Object.assign(business, req.body);
       await business.save();
     } else {
-      business = await businessService.updateBusiness(
-        req.params.id,
-        userId.toString(),
-        req.body
-      );
+      business = await businessService.updateBusiness(req.params.id, userId.toString(), req.body);
     }
 
     res.status(200).json({

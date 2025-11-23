@@ -2,11 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import { authService } from '../services/authService.js';
 import { AppError } from '../middleware/errorHandler.js';
 
-export const register = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<void> => {
+export const register = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { name, email, password, role, phone, avatar } = req.body;
 
@@ -32,11 +28,7 @@ export const register = async (
   }
 };
 
-export const login = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<void> => {
+export const login = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { email, password } = req.body;
 
