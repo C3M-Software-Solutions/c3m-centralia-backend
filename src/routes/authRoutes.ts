@@ -6,6 +6,25 @@ import { validate } from '../middleware/validate.js';
 
 const router = Router();
 
+// Validation rules
+const registerValidation = [
+  body('name').trim().notEmpty().withMessage('Name is required'),
+  body('email').isEmail().withMessage('Valid email is required'),
+  body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters'),
+  body('role').optional().isIn(['admin', 'specialist', 'client']).withMessage('Invalid role'),
+];
+
+const loginValidation = [
+  body('email').isEmail().withMessage('Valid email is required'),
+  body('password').notEmpty().withMessage('Password is required'),
+];
+
+const updateProfileValidation = [
+  body('name').optional().trim().notEmpty().withMessage('Name cannot be empty'),
+  body('phone').optional().trim(),
+  body('avatar').optional().trim().isURL().withMessage('Avatar must be a valid URL'),
+];
+
 /**
  * @swagger
  * /api/auth/register:
@@ -69,6 +88,7 @@ const router = Router();
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
+router.post('/register', validate(registerValidation), register);
 
 /**
  * @swagger
@@ -121,12 +141,13 @@ const router = Router();
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
+router.post('/login', validate(loginValidation), login);
 
 /**
  * @swagger
  * /api/auth/profile:
  *   get:
- *     summary: Get current user profile
+ *     summary: Get user profile
  *     tags: [Authentication]
  *     security:
  *       - bearerAuth: []
@@ -153,6 +174,7 @@ const router = Router();
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
+router.get('/profile', authenticate, getProfile);
 
 /**
  * @swagger
@@ -163,6 +185,7 @@ const router = Router();
  *     security:
  *       - bearerAuth: []
  *     requestBody:
+ *       required: true
  *       content:
  *         application/json:
  *           schema:
@@ -201,30 +224,6 @@ const router = Router();
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-
-// Validation rules
-const registerValidation = [
-  body('name').trim().notEmpty().withMessage('Name is required'),
-  body('email').isEmail().withMessage('Valid email is required'),
-  body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters'),
-  body('role').optional().isIn(['admin', 'specialist', 'client']).withMessage('Invalid role'),
-];
-
-const loginValidation = [
-  body('email').isEmail().withMessage('Valid email is required'),
-  body('password').notEmpty().withMessage('Password is required'),
-];
-
-const updateProfileValidation = [
-  body('name').optional().trim().notEmpty().withMessage('Name cannot be empty'),
-  body('phone').optional().trim(),
-  body('avatar').optional().trim().isURL().withMessage('Avatar must be a valid URL'),
-];
-
-// Routes
-router.post('/register', validate(registerValidation), register);
-router.post('/login', validate(loginValidation), login);
-router.get('/profile', authenticate, getProfile);
 router.put('/profile', authenticate, validate(updateProfileValidation), updateProfile);
 
 export default router;

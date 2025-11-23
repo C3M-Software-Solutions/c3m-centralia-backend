@@ -12,6 +12,15 @@ import { validate } from '../middleware/validate.js';
 
 const router = Router();
 
+// Validation rules
+const reservationValidation = [
+  body('business').notEmpty().withMessage('Business ID is required'),
+  body('specialist').notEmpty().withMessage('Specialist ID is required'),
+  body('service').notEmpty().withMessage('Service ID is required'),
+  body('startDate').isISO8601().withMessage('Valid start date is required'),
+  body('notes').optional().trim(),
+];
+
 /**
  * @swagger
  * /api/reservations/availability:
@@ -59,6 +68,14 @@ const router = Router();
  *                     serviceDuration:
  *                       type: number
  */
+const updateStatusValidation = [
+  body('status')
+    .isIn(['pending', 'confirmed', 'cancelled', 'completed', 'no-show'])
+    .withMessage('Invalid status'),
+  body('cancellationReason').optional().trim(),
+];
+
+router.post('/', authenticate, validate(reservationValidation), createReservation);
 
 /**
  * @swagger
@@ -115,6 +132,7 @@ const router = Router();
  *       409:
  *         description: Time slot not available
  */
+router.get('/', authenticate, getReservations);
 
 /**
  * @swagger
@@ -162,6 +180,7 @@ const router = Router();
  *                       items:
  *                         $ref: '#/components/schemas/Reservation'
  */
+router.get('/availability', checkAvailability);
 
 /**
  * @swagger
@@ -184,6 +203,7 @@ const router = Router();
  *       404:
  *         description: Reservation not found
  */
+router.get('/:id', authenticate, getReservationById);
 
 /**
  * @swagger
@@ -222,32 +242,6 @@ const router = Router();
  *       404:
  *         description: Reservation not found
  */
-
-// Validation rules
-const reservationValidation = [
-  body('business').notEmpty().withMessage('Business ID is required'),
-  body('specialist').notEmpty().withMessage('Specialist ID is required'),
-  body('service').notEmpty().withMessage('Service ID is required'),
-  body('startDate').isISO8601().withMessage('Valid start date is required'),
-  body('notes').optional().trim(),
-];
-
-const updateStatusValidation = [
-  body('status')
-    .isIn(['pending', 'confirmed', 'cancelled', 'completed', 'no-show'])
-    .withMessage('Invalid status'),
-  body('cancellationReason').optional().trim(),
-];
-
-// Routes
-router.post('/', authenticate, validate(reservationValidation), createReservation);
-
-router.get('/', authenticate, getReservations);
-
-router.get('/availability', checkAvailability);
-
-router.get('/:id', authenticate, getReservationById);
-
 router.put('/:id/status', authenticate, validate(updateStatusValidation), updateReservationStatus);
 
 export default router;
