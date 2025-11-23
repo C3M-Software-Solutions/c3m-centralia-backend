@@ -57,6 +57,25 @@ const swaggerUiOptions = {
 
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, swaggerUiOptions));
 
+// Root route
+app.get('/', (_req: Request, res: Response) => {
+  res.json({
+    status: 'success',
+    message: 'C3M Centralia Backend API',
+    version: '1.0.0',
+    documentation: '/api-docs',
+    endpoints: {
+      api: '/api',
+      health: '/health',
+      auth: '/api/auth',
+      businesses: '/api/businesses',
+      reservations: '/api/reservations',
+      clinicalRecords: '/api/clinical-records',
+      upload: '/api/upload',
+    },
+  });
+});
+
 // Health check endpoint
 app.get('/health', (_req: Request, res: Response) => {
   res.status(200).json({
