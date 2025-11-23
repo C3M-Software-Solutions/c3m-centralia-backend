@@ -138,7 +138,10 @@ describe('Business Model Tests', () => {
         user: testUser._id,
       });
 
-      const populatedBusiness = await Business.findById(business._id).populate('user', 'name email');
+      const populatedBusiness = await Business.findById(business._id).populate(
+        'user',
+        'name email'
+      );
 
       expect(populatedBusiness).toBeDefined();
       expect(populatedBusiness?.user).toBeDefined();
@@ -190,7 +193,7 @@ describe('Business Model Tests', () => {
       const originalUpdatedAt = business.updatedAt;
 
       // Wait a bit to ensure timestamp difference
-      await new Promise(resolve => setTimeout(resolve, 10));
+      await new Promise((resolve) => setTimeout(resolve, 10));
 
       business.name = 'Modified Name';
       await business.save();

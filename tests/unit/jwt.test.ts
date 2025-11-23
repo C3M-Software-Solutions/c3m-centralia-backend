@@ -1,4 +1,9 @@
-import { generateAccessToken, generateRefreshToken, verifyAccessToken, verifyRefreshToken } from '../../src/utils/jwt';
+import {
+  generateAccessToken,
+  generateRefreshToken,
+  verifyAccessToken,
+  verifyRefreshToken,
+} from '../../src/utils/jwt';
 import { Types } from 'mongoose';
 
 describe('JWT Utils Tests', () => {
@@ -86,7 +91,7 @@ describe('JWT Utils Tests', () => {
 
     it('should not verify access token as refresh token', () => {
       const accessToken = generateAccessToken(mockPayload);
-      
+
       expect(() => verifyRefreshToken(accessToken)).toThrow();
     });
   });

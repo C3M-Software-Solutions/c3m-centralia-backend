@@ -30,10 +30,7 @@ describe('Auth Controller Tests', () => {
         role: 'client',
       };
 
-      const response = await request(app)
-        .post('/api/auth/register')
-        .send(userData)
-        .expect(201);
+      const response = await request(app).post('/api/auth/register').send(userData).expect(201);
 
       expect(response.body.status).toBe('success');
       expect(response.body.data).toHaveProperty('user');
@@ -52,10 +49,7 @@ describe('Auth Controller Tests', () => {
         password: 'password123',
       };
 
-      const response = await request(app)
-        .post('/api/auth/register')
-        .send(userData)
-        .expect(201);
+      const response = await request(app).post('/api/auth/register').send(userData).expect(201);
 
       expect(response.body.data.user.role).toBe('client');
     });
@@ -79,10 +73,7 @@ describe('Auth Controller Tests', () => {
         password: 'password123',
       };
 
-      const response = await request(app)
-        .post('/api/auth/register')
-        .send(userData)
-        .expect(400);
+      const response = await request(app).post('/api/auth/register').send(userData).expect(400);
 
       expect(response.body.status).toBe('error');
     });
@@ -94,10 +85,7 @@ describe('Auth Controller Tests', () => {
         password: '12345', // Less than 6 characters
       };
 
-      const response = await request(app)
-        .post('/api/auth/register')
-        .send(userData)
-        .expect(400);
+      const response = await request(app).post('/api/auth/register').send(userData).expect(400);
 
       expect(response.body.status).toBe('error');
     });
@@ -113,10 +101,7 @@ describe('Auth Controller Tests', () => {
       await request(app).post('/api/auth/register').send(userData).expect(201);
 
       // Second registration with same email
-      const response = await request(app)
-        .post('/api/auth/register')
-        .send(userData)
-        .expect(409);
+      const response = await request(app).post('/api/auth/register').send(userData).expect(409);
 
       expect(response.body.status).toBe('error');
       expect(response.body.message).toContain('already');
@@ -130,10 +115,7 @@ describe('Auth Controller Tests', () => {
         role: 'invalid_role',
       };
 
-      const response = await request(app)
-        .post('/api/auth/register')
-        .send(userData)
-        .expect(400);
+      const response = await request(app).post('/api/auth/register').send(userData).expect(400);
 
       expect(response.body.status).toBe('error');
     });
@@ -156,10 +138,7 @@ describe('Auth Controller Tests', () => {
         password: 'password123',
       };
 
-      const response = await request(app)
-        .post('/api/auth/login')
-        .send(loginData)
-        .expect(200);
+      const response = await request(app).post('/api/auth/login').send(loginData).expect(200);
 
       expect(response.body.status).toBe('success');
       expect(response.body.data).toHaveProperty('user');
@@ -175,10 +154,7 @@ describe('Auth Controller Tests', () => {
         password: 'wrongpassword',
       };
 
-      const response = await request(app)
-        .post('/api/auth/login')
-        .send(loginData)
-        .expect(401);
+      const response = await request(app).post('/api/auth/login').send(loginData).expect(401);
 
       expect(response.body.status).toBe('error');
       expect(response.body.message).toContain('Invalid');
@@ -190,10 +166,7 @@ describe('Auth Controller Tests', () => {
         password: 'password123',
       };
 
-      const response = await request(app)
-        .post('/api/auth/login')
-        .send(loginData)
-        .expect(401);
+      const response = await request(app).post('/api/auth/login').send(loginData).expect(401);
 
       expect(response.body.status).toBe('error');
     });
@@ -203,10 +176,7 @@ describe('Auth Controller Tests', () => {
         password: 'password123',
       };
 
-      const response = await request(app)
-        .post('/api/auth/login')
-        .send(loginData)
-        .expect(400);
+      const response = await request(app).post('/api/auth/login').send(loginData).expect(400);
 
       expect(response.body.status).toBe('error');
     });
@@ -216,10 +186,7 @@ describe('Auth Controller Tests', () => {
         email: 'test@example.com',
       };
 
-      const response = await request(app)
-        .post('/api/auth/login')
-        .send(loginData)
-        .expect(400);
+      const response = await request(app).post('/api/auth/login').send(loginData).expect(400);
 
       expect(response.body.status).toBe('error');
     });
@@ -236,9 +203,7 @@ describe('Auth Controller Tests', () => {
         password: 'password123',
       };
 
-      const response = await request(app)
-        .post('/api/auth/register')
-        .send(userData);
+      const response = await request(app).post('/api/auth/register').send(userData);
 
       accessToken = response.body.data.accessToken;
     });
@@ -257,9 +222,7 @@ describe('Auth Controller Tests', () => {
     });
 
     it('should fail to get profile without token', async () => {
-      const response = await request(app)
-        .get('/api/auth/profile')
-        .expect(401);
+      const response = await request(app).get('/api/auth/profile').expect(401);
 
       expect(response.body.status).toBe('error');
     });
@@ -284,9 +247,7 @@ describe('Auth Controller Tests', () => {
         password: 'password123',
       };
 
-      const response = await request(app)
-        .post('/api/auth/register')
-        .send(userData);
+      const response = await request(app).post('/api/auth/register').send(userData);
 
       accessToken = response.body.data.accessToken;
     });
@@ -331,10 +292,7 @@ describe('Auth Controller Tests', () => {
         name: 'Updated Name',
       };
 
-      const response = await request(app)
-        .put('/api/auth/profile')
-        .send(updateData)
-        .expect(401);
+      const response = await request(app).put('/api/auth/profile').send(updateData).expect(401);
 
       expect(response.body.status).toBe('error');
     });

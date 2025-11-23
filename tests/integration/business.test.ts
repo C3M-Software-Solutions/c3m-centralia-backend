@@ -98,10 +98,7 @@ describe('Business Controller Tests', () => {
         name: 'Test Business',
       };
 
-      const response = await request(app)
-        .post('/api/businesses')
-        .send(businessData)
-        .expect(401);
+      const response = await request(app).post('/api/businesses').send(businessData).expect(401);
 
       expect(response.body.status).toBe('error');
     });
@@ -177,9 +174,7 @@ describe('Business Controller Tests', () => {
     });
 
     it('should get all active businesses', async () => {
-      const response = await request(app)
-        .get('/api/businesses')
-        .expect(200);
+      const response = await request(app).get('/api/businesses').expect(200);
 
       expect(response.body.status).toBe('success');
       expect(response.body.data.businesses).toBeDefined();
@@ -187,9 +182,7 @@ describe('Business Controller Tests', () => {
     });
 
     it('should support pagination', async () => {
-      const response = await request(app)
-        .get('/api/businesses?page=1&limit=2')
-        .expect(200);
+      const response = await request(app).get('/api/businesses?page=1&limit=2').expect(200);
 
       expect(response.body.status).toBe('success');
       expect(response.body.data.pagination).toBeDefined();
@@ -198,9 +191,7 @@ describe('Business Controller Tests', () => {
     });
 
     it('should return businesses with owner information', async () => {
-      const response = await request(app)
-        .get('/api/businesses')
-        .expect(200);
+      const response = await request(app).get('/api/businesses').expect(200);
 
       expect(response.body.status).toBe('success');
       expect(response.body.data.businesses.length).toBeGreaterThan(0);
@@ -221,9 +212,7 @@ describe('Business Controller Tests', () => {
     });
 
     it('should get business by id', async () => {
-      const response = await request(app)
-        .get(`/api/businesses/${testBusiness._id}`)
-        .expect(200);
+      const response = await request(app).get(`/api/businesses/${testBusiness._id}`).expect(200);
 
       expect(response.body.status).toBe('success');
       expect(response.body.data.business).toBeDefined();
@@ -231,9 +220,7 @@ describe('Business Controller Tests', () => {
     });
 
     it('should populate owner information', async () => {
-      const response = await request(app)
-        .get(`/api/businesses/${testBusiness._id}`)
-        .expect(200);
+      const response = await request(app).get(`/api/businesses/${testBusiness._id}`).expect(200);
 
       expect(response.body.data.business.user).toBeDefined();
       expect(response.body.data.business.user.name).toBe(adminUser.name);
@@ -242,17 +229,13 @@ describe('Business Controller Tests', () => {
     it('should return 404 for non-existent business', async () => {
       const fakeId = '507f1f77bcf86cd799439011';
 
-      const response = await request(app)
-        .get(`/api/businesses/${fakeId}`)
-        .expect(404);
+      const response = await request(app).get(`/api/businesses/${fakeId}`).expect(404);
 
       expect(response.body.status).toBe('error');
     });
 
     it('should return 400 for invalid business id', async () => {
-      const response = await request(app)
-        .get('/api/businesses/invalid-id')
-        .expect(400);
+      const response = await request(app).get('/api/businesses/invalid-id').expect(400);
 
       expect(response.body.status).toBe('error');
     });
