@@ -12,6 +12,10 @@ yarn.lock
 dist/
 build/
 
+# Uploads (local storage)
+uploads/
+!uploads/.gitkeep
+
 # Logs
 logs/
 *.log
