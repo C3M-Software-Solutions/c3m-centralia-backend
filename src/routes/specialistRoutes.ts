@@ -17,6 +17,8 @@ const specialistValidation = [
   body('userId').trim().notEmpty().withMessage('User ID is required'),
   body('specialty').trim().notEmpty().withMessage('Specialty is required'),
   body('bio').optional().trim(),
+  body('services').optional().isArray().withMessage('Services must be an array'),
+  body('services.*').optional().isMongoId().withMessage('Each service must be a valid ID'),
   body('schedule').optional().isArray().withMessage('Schedule must be an array'),
   body('schedule.*.day')
     .optional()
@@ -66,6 +68,12 @@ const specialistValidation = [
  *               bio:
  *                 type: string
  *                 example: Experienced physical therapist with 10 years of practice
+ *               services:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                 example: ["507f1f77bcf86cd799439012", "507f1f77bcf86cd799439013"]
+ *                 description: Array of service IDs that this specialist can provide
  *               schedule:
  *                 type: array
  *                 items:

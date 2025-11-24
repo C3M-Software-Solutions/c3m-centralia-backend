@@ -35,6 +35,11 @@ export const createReservation = async (
         next(new AppError(error.message, 404));
       } else if (error.message.includes('already booked')) {
         next(new AppError(error.message, 409));
+      } else if (
+        error.message.includes('does not belong') ||
+        error.message.includes('cannot provide')
+      ) {
+        next(new AppError(error.message, 400));
       } else {
         next(error);
       }

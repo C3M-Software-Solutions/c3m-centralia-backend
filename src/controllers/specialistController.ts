@@ -24,6 +24,7 @@ export const createSpecialist = async (req: Request, res: Response) => {
       specialty: req.body.specialty,
       bio: req.body.bio,
       schedule: req.body.schedule,
+      services: req.body.services,
     });
 
     return res.status(201).json({
@@ -102,6 +103,7 @@ export const updateSpecialist = async (req: Request, res: Response) => {
       specialty: req.body.specialty,
       bio: req.body.bio,
       schedule: req.body.schedule,
+      services: req.body.services,
     });
 
     return res.status(200).json({

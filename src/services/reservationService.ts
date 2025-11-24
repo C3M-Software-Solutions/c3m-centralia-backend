@@ -34,10 +34,26 @@ export class ReservationService {
       throw new Error('Specialist not found or inactive');
     }
 
+    // Verify specialist belongs to the business
+    if (specialist.business.toString() !== data.businessId) {
+      throw new Error('Specialist does not belong to this business');
+    }
+
     // Verify service exists and get duration
     const service = await Service.findById(data.serviceId);
     if (!service || !service.isActive) {
       throw new Error('Service not found or inactive');
+    }
+
+    // Verify service belongs to the business
+    if (service.business.toString() !== data.businessId) {
+      throw new Error('Service does not belong to this business');
+    }
+
+    // Verify specialist can provide this service
+    const specialistServices = specialist.services.map((s) => s.toString());
+    if (specialistServices.length > 0 && !specialistServices.includes(data.serviceId)) {
+      throw new Error('Specialist cannot provide this service');
     }
 
     // Calculate end date based on service duration

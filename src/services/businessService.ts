@@ -41,6 +41,7 @@ export interface CreateSpecialistData {
     startTime: string;
     endTime: string;
   }>;
+  services?: string[];
 }
 
 export class BusinessService {
@@ -198,15 +199,30 @@ export class BusinessService {
       throw new Error('Business not found');
     }
 
+    // Validate services if provided
+    if (data.services && data.services.length > 0) {
+      const services = await Service.find({
+        _id: { $in: data.services },
+        business: data.businessId,
+      });
+
+      if (services.length !== data.services.length) {
+        throw new Error('One or more services do not belong to this business');
+      }
+    }
+
     const specialist = await Specialist.create({
       business: data.businessId,
       user: data.userId,
       specialty: data.specialty,
       bio: data.bio,
       availability: data.schedule,
+      services: data.services || [],
     });
 
-    return specialist;
+    return await Specialist.findById(specialist._id)
+      .populate('user', 'name email phone avatar')
+      .populate('services', 'name duration price');
   }
 
   async getSpecialistsByBusiness(businessId: string) {
@@ -232,10 +248,30 @@ export class BusinessService {
       throw new Error('Unauthorized to update this specialist');
     }
 
-    Object.assign(specialist, data);
+    // Validate services if provided
+    if (data.services) {
+      const services = await Service.find({
+        _id: { $in: data.services },
+        business: businessId,
+      });
+
+      if (services.length !== data.services.length) {
+        throw new Error('One or more services do not belong to this business');
+      }
+      specialist.services = data.services as any;
+    }
+
+    // Update other fields
+    if (data.userId) specialist.user = data.userId as any;
+    if (data.specialty) specialist.specialty = data.specialty;
+    if (data.bio !== undefined) specialist.bio = data.bio;
+    if (data.schedule) specialist.availability = data.schedule as any;
+
     await specialist.save();
 
-    return specialist;
+    return await Specialist.findById(specialistId)
+      .populate('user', 'name email phone avatar')
+      .populate('services', 'name duration price');
   }
 
   async deleteSpecialist(specialistId: string, businessId: string) {

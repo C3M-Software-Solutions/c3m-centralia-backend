@@ -184,6 +184,77 @@ describe('Specialist Controller Tests', () => {
         .send(specialistData)
         .expect(400);
     });
+
+    it('should create specialist with services', async () => {
+      // Create services for the business
+      const Service = (await import('../../../src/models/Service.js')).Service;
+      const service1 = await Service.create({
+        business: testBusiness._id,
+        name: 'Consultation',
+        duration: 30,
+        price: 50,
+        isActive: true,
+      });
+      const service2 = await Service.create({
+        business: testBusiness._id,
+        name: 'Follow-up',
+        duration: 15,
+        price: 25,
+        isActive: true,
+      });
+
+      const specialistData = {
+        userId: specialistUser._id.toString(),
+        specialty: 'General Medicine',
+        services: [service1._id.toString(), service2._id.toString()],
+      };
+
+      const response = await request(app)
+        .post(`/api/businesses/${testBusiness._id}/specialists`)
+        .set('Authorization', `Bearer ${ownerToken}`)
+        .send(specialistData)
+        .expect(201);
+
+      expect(response.body.status).toBe('success');
+      expect(response.body.data.specialist.services).toHaveLength(2);
+      expect(response.body.data.specialist.services[0]._id).toBe(service1._id.toString());
+    });
+
+    it('should fail to create specialist with services from different business', async () => {
+      // Create another business
+      const Business = (await import('../../../src/models/Business.js')).Business;
+      const otherBusiness = await Business.create({
+        user: otherUser._id,
+        name: 'Other Business',
+        email: 'other@test.com',
+        hasPremises: true,
+        hasRemoteSessions: false,
+      });
+
+      // Create service for other business
+      const Service = (await import('../../../src/models/Service.js')).Service;
+      const otherService = await Service.create({
+        business: otherBusiness._id,
+        name: 'Other Service',
+        duration: 30,
+        price: 50,
+        isActive: true,
+      });
+
+      const specialistData = {
+        userId: specialistUser._id.toString(),
+        specialty: 'General Medicine',
+        services: [otherService._id.toString()],
+      };
+
+      const response = await request(app)
+        .post(`/api/businesses/${testBusiness._id}/specialists`)
+        .set('Authorization', `Bearer ${ownerToken}`)
+        .send(specialistData)
+        .expect(400);
+
+      expect(response.body.message).toContain('do not belong to this business');
+    });
   });
 
   describe('GET /api/businesses/:businessId/specialists', () => {
@@ -339,6 +410,74 @@ describe('Specialist Controller Tests', () => {
         .expect(403);
 
       expect(response.body.status).toBe('error');
+    });
+
+    it('should update specialist services', async () => {
+      // Create services for the business
+      const Service = (await import('../../../src/models/Service.js')).Service;
+      const service1 = await Service.create({
+        business: testBusiness._id,
+        name: 'Consultation',
+        duration: 30,
+        price: 50,
+        isActive: true,
+      });
+      const service2 = await Service.create({
+        business: testBusiness._id,
+        name: 'Treatment',
+        duration: 60,
+        price: 100,
+        isActive: true,
+      });
+
+      const updateData = {
+        services: [service1._id.toString(), service2._id.toString()],
+      };
+
+      const response = await request(app)
+        .put(`/api/businesses/${testBusiness._id}/specialists/${testSpecialist._id}`)
+        .set('Authorization', `Bearer ${ownerToken}`)
+        .send(updateData)
+        .expect(200);
+
+      expect(response.body.status).toBe('success');
+      expect(response.body.data.specialist.services).toHaveLength(2);
+      expect(response.body.data.specialist.services[0]._id).toBe(service1._id.toString());
+      expect(response.body.data.specialist.services[1]._id).toBe(service2._id.toString());
+    });
+
+    it('should fail to update with services from different business', async () => {
+      // Create another business
+      const Business = (await import('../../../src/models/Business.js')).Business;
+      const otherBusiness = await Business.create({
+        user: otherUser._id,
+        name: 'Other Business',
+        email: 'other2@test.com',
+        hasPremises: true,
+        hasRemoteSessions: false,
+      });
+
+      // Create service for other business
+      const Service = (await import('../../../src/models/Service.js')).Service;
+      const otherService = await Service.create({
+        business: otherBusiness._id,
+        name: 'Other Service',
+        duration: 30,
+        price: 50,
+        isActive: true,
+      });
+
+      const updateData = {
+        services: [otherService._id.toString()],
+      };
+
+      const response = await request(app)
+        .put(`/api/businesses/${testBusiness._id}/specialists/${testSpecialist._id}`)
+        .set('Authorization', `Bearer ${ownerToken}`)
+        .send(updateData)
+        .expect(400);
+
+      expect(response.body.message).toContain('do not belong to this business');
     });
   });
 

@@ -111,6 +111,109 @@ describe('Reservation Integration Tests', () => {
         .set('Authorization', `Bearer ${clientToken}`)
         .send(reservationData)
         .expect(404);
+
+      // Restore specialist for next tests
+      specialist.isActive = true;
+      await specialist.save();
+    });
+
+    it('should fail when service does not belong to business', async () => {
+      // Create service for different business
+      const otherBusiness = await Business.create({
+        user: specialistUser._id,
+        name: 'Other Business',
+        email: 'other@test.com',
+        hasPremises: true,
+        hasRemoteSessions: false,
+      });
+
+      const otherService = await Service.create({
+        business: otherBusiness._id,
+        name: 'Other Service',
+        duration: 30,
+        price: 50,
+        isActive: true,
+      });
+
+      const reservationData = {
+        business: business._id.toString(),
+        specialist: specialist._id.toString(),
+        service: otherService._id.toString(),
+        startDate: new Date().toISOString(),
+      };
+
+      const response = await request(app)
+        .post('/api/reservations')
+        .set('Authorization', `Bearer ${clientToken}`)
+        .send(reservationData)
+        .expect(400);
+
+      expect(response.body.message).toContain('does not belong to this business');
+    });
+
+    it('should fail when specialist does not belong to business', async () => {
+      const otherBusiness = await Business.create({
+        user: clientUser._id,
+        name: 'Another Business',
+        email: 'another@test.com',
+        hasPremises: true,
+        hasRemoteSessions: false,
+      });
+
+      const otherSpecialist = await Specialist.create({
+        user: specialistUser._id,
+        business: otherBusiness._id,
+        specialty: 'Dental',
+        isActive: true,
+      });
+
+      const reservationData = {
+        business: business._id.toString(),
+        specialist: otherSpecialist._id.toString(),
+        service: service._id.toString(),
+        startDate: new Date().toISOString(),
+      };
+
+      const response = await request(app)
+        .post('/api/reservations')
+        .set('Authorization', `Bearer ${clientToken}`)
+        .send(reservationData)
+        .expect(400);
+
+      expect(response.body.message).toContain('does not belong to this business');
+    });
+
+    it('should fail when specialist cannot provide service', async () => {
+      // Assign a different service to specialist
+      const anotherService = await Service.create({
+        business: business._id,
+        name: 'Another Service',
+        duration: 45,
+        price: 75,
+        isActive: true,
+      });
+
+      specialist.services = [anotherService._id];
+      await specialist.save();
+
+      const reservationData = {
+        business: business._id.toString(),
+        specialist: specialist._id.toString(),
+        service: service._id.toString(), // This service is not in specialist.services
+        startDate: new Date().toISOString(),
+      };
+
+      const response = await request(app)
+        .post('/api/reservations')
+        .set('Authorization', `Bearer ${clientToken}`)
+        .send(reservationData)
+        .expect(400);
+
+      expect(response.body.message).toContain('cannot provide this service');
+
+      // Reset specialist services
+      specialist.services = [];
+      await specialist.save();
     });
   });
 

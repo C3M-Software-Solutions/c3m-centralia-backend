@@ -1,6 +1,7 @@
 import { businessService } from '../../../src/services/businessService';
 import { Business } from '../../../src/models/Business';
 import { User } from '../../../src/models/User';
+import { Service } from '../../../src/models/Service';
 import { hashPassword } from '../../../src/utils/password';
 
 describe('Business Service Tests', () => {
@@ -368,8 +369,9 @@ describe('Business Service Tests', () => {
       const specialist = await businessService.createSpecialist(specialistData);
 
       expect(specialist).toBeDefined();
-      expect(specialist.specialty).toEqual(specialistData.specialty);
-      expect(specialist.bio).toBe(specialistData.bio);
+      expect(specialist).not.toBeNull();
+      expect(specialist!.specialty).toEqual(specialistData.specialty);
+      expect(specialist!.bio).toBe(specialistData.bio);
     });
 
     it('should throw error when creating specialist for non-existent business', async () => {
@@ -398,6 +400,66 @@ describe('Business Service Tests', () => {
 
       expect(specialists).toHaveLength(1);
       expect(specialists[0].user).toBeDefined();
+    });
+
+    it('should create specialist with services', async () => {
+      // Create services
+      const service1 = await Service.create({
+        business: testBusiness._id,
+        name: 'Service 1',
+        duration: 30,
+        price: 50,
+        isActive: true,
+      });
+      const service2 = await Service.create({
+        business: testBusiness._id,
+        name: 'Service 2',
+        duration: 60,
+        price: 100,
+        isActive: true,
+      });
+
+      const specialistData = {
+        businessId: testBusiness._id.toString(),
+        userId: specialistUser._id.toString(),
+        specialty: 'Physical Therapy',
+        services: [service1._id.toString(), service2._id.toString()],
+      };
+
+      const specialist = await businessService.createSpecialist(specialistData);
+
+      expect(specialist).toBeDefined();
+      expect(specialist).not.toBeNull();
+      expect(specialist!.services).toHaveLength(2);
+      expect(specialist!.services[0]._id.toString()).toBe(service1._id.toString());
+    });
+
+    it('should throw error when creating specialist with services from different business', async () => {
+      const otherBusiness = await Business.create({
+        name: 'Other Business',
+        user: anotherUser._id,
+        hasPremises: true,
+        hasRemoteSessions: false,
+      });
+
+      const service = await Service.create({
+        business: otherBusiness._id,
+        name: 'Other Service',
+        duration: 30,
+        price: 50,
+        isActive: true,
+      });
+
+      const specialistData = {
+        businessId: testBusiness._id.toString(),
+        userId: specialistUser._id.toString(),
+        specialty: 'General',
+        services: [service._id.toString()],
+      };
+
+      await expect(businessService.createSpecialist(specialistData)).rejects.toThrow(
+        'do not belong to this business'
+      );
     });
   });
 });

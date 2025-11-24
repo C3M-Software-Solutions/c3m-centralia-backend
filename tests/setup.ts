@@ -7,6 +7,8 @@ import {
   reservationRoutes,
   clinicalRecordRoutes,
   uploadRoutes,
+  serviceRoutes,
+  specialistRoutes,
 } from '../src/routes/index.js';
 import { errorHandler } from '../src/middleware/errorHandler.js';
 
@@ -21,6 +23,9 @@ export const createTestApp = (): Express => {
   app.use('/api/reservations', reservationRoutes);
   app.use('/api/clinical-records', clinicalRecordRoutes);
   app.use('/api/upload', uploadRoutes);
+  // Nested routes for business-specific resources
+  app.use('/api/businesses/:businessId/services', serviceRoutes);
+  app.use('/api/businesses/:businessId/specialists', specialistRoutes);
   app.use(errorHandler);
   return app;
 };
