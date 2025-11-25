@@ -53,6 +53,13 @@ describe('User Model Tests', () => {
     });
 
     it('should fail to create duplicate user with same email', async () => {
+      // Ensure unique index exists for this test
+      try {
+        await User.syncIndexes();
+      } catch (error) {
+        // Ignore if already exists
+      }
+
       const userData = {
         name: 'Test User',
         email: 'test@example.com',
@@ -281,8 +288,16 @@ describe('User Model Tests', () => {
 
   describe('User Indexes', () => {
     it('should have unique index on email', async () => {
+      // Ensure indexes are synced (won't fail if already exist)
+      try {
+        await User.syncIndexes();
+      } catch (error) {
+        // Ignore errors if indexes already exist
+      }
+
       const indexes = await User.collection.getIndexes();
 
+      // Verify email index exists
       expect(indexes).toHaveProperty('email_1');
     });
   });

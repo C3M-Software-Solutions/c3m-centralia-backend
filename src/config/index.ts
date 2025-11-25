@@ -30,13 +30,18 @@ export const config = {
     allowedTypes: ['image/jpeg', 'image/png', 'image/jpg', 'application/pdf'],
   },
   smtp: {
-    host: process.env.SMTP_HOST || 'smtp.gmail.com',
-    port: parseInt(process.env.SMTP_PORT || '587', 10),
+    host: process.env.SMTP_HOST,
+    port: process.env.SMTP_PORT ? parseInt(process.env.SMTP_PORT, 10) : undefined,
+    secure: process.env.SMTP_SECURE === 'true',
     user: process.env.SMTP_USER,
-    password: process.env.SMTP_PASSWORD,
-    from: process.env.SMTP_FROM || 'noreply@c3mcentral.com',
+    pass: process.env.SMTP_PASS,
+    fromName: process.env.SMTP_FROM_NAME || 'C3M Software Solutions',
+    fromEmail: process.env.SMTP_FROM_EMAIL,
   },
   app: {
     frontendUrl: process.env.FRONTEND_URL || 'http://localhost:3000',
+  },
+  cron: {
+    secret: process.env.CRON_SECRET,
   },
 };

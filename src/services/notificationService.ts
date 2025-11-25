@@ -1,5 +1,6 @@
 import nodemailer from 'nodemailer';
 import { IReservation } from '../models/Reservation.js';
+import { config } from '../config/index.js';
 
 interface EmailData {
   to: string;
@@ -28,23 +29,18 @@ export class NotificationService {
 
   private initializeTransporter() {
     // Only initialize if email credentials are provided
-    if (
-      !process.env.SMTP_HOST ||
-      !process.env.SMTP_PORT ||
-      !process.env.SMTP_USER ||
-      !process.env.SMTP_PASS
-    ) {
+    if (!config.smtp.host || !config.smtp.port || !config.smtp.user || !config.smtp.pass) {
       console.warn('Email configuration not found. Notifications will be disabled.');
       return;
     }
 
     this.transporter = nodemailer.createTransport({
-      host: process.env.SMTP_HOST,
-      port: parseInt(process.env.SMTP_PORT),
-      secure: process.env.SMTP_SECURE === 'true', // true for 465, false for other ports
+      host: config.smtp.host,
+      port: config.smtp.port,
+      secure: config.smtp.secure,
       auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASS,
+        user: config.smtp.user,
+        pass: config.smtp.pass,
       },
     });
   }
@@ -56,8 +52,9 @@ export class NotificationService {
     }
 
     try {
+      const fromEmail = config.smtp.fromEmail || config.smtp.user;
       await this.transporter.sendMail({
-        from: `"${process.env.SMTP_FROM_NAME || 'C3M Centralia'}" <${process.env.SMTP_FROM_EMAIL || process.env.SMTP_USER}>`,
+        from: `"${config.smtp.fromName}" <${fromEmail}>`,
         to: data.to,
         subject: data.subject,
         html: data.html,

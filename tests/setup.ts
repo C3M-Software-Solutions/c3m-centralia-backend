@@ -37,6 +37,9 @@ beforeAll(async () => {
     await mongoose.disconnect();
   }
 
+  // Disable index creation to avoid duplicate index warnings in tests
+  mongoose.set('autoIndex', false);
+
   // Start in-memory MongoDB
   mongoServer = await MongoMemoryServer.create();
   const mongoUri = mongoServer.getUri();
