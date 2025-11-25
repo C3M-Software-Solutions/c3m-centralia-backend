@@ -31,6 +31,7 @@ export const createClinicalRecord = async (
         patientId: req.body.user,
         businessId: req.body.business,
         specialistId,
+        reservationId: req.body.reservation,
         diagnosis: req.body.diagnosis,
         treatment: req.body.treatment,
         notes: req.body.notes,
@@ -52,8 +53,13 @@ export const createClinicalRecord = async (
     if (error instanceof Error) {
       if (error.message.includes('not found')) {
         next(new AppError(error.message, 404));
-      } else if (error.message.includes('unauthorized')) {
+      } else if (
+        error.message.includes('unauthorized') ||
+        error.message.includes('does not belong')
+      ) {
         next(new AppError(error.message, 403));
+      } else if (error.message.includes('already exists')) {
+        next(new AppError(error.message, 409));
       } else {
         next(error);
       }
@@ -133,6 +139,46 @@ export const getClinicalRecordById = async (
         next(new AppError('Invalid clinical record ID', 400));
       } else if (error.message.includes('not found')) {
         next(new AppError('Clinical record not found', 404));
+      } else if (error.message.includes('Unauthorized')) {
+        next(new AppError('Not authorized to view this record', 403));
+      } else {
+        next(error);
+      }
+    } else {
+      next(error);
+    }
+  }
+};
+
+export const getClinicalRecordByReservation = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const userId = req.user?.userId;
+    const userRole = req.user?.role;
+
+    if (!userId) {
+      throw new AppError('Unauthorized', 401);
+    }
+
+    const record = await clinicalRecordService.getClinicalRecordByReservation(
+      req.params.id,
+      userId.toString(),
+      userRole || 'client'
+    );
+
+    res.status(200).json({
+      status: 'success',
+      data: { clinicalRecord: record },
+    });
+  } catch (error) {
+    if (error instanceof Error) {
+      if (error.message.includes('Invalid')) {
+        next(new AppError('Invalid reservation ID', 400));
+      } else if (error.message.includes('not found')) {
+        next(new AppError(error.message, 404));
       } else if (error.message.includes('Unauthorized')) {
         next(new AppError('Not authorized to view this record', 403));
       } else {

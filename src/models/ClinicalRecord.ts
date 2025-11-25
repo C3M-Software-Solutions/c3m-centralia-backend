@@ -4,6 +4,7 @@ export interface IClinicalRecord extends Document {
   user: Types.ObjectId;
   specialist: Types.ObjectId;
   business: Types.ObjectId;
+  reservation?: Types.ObjectId;
   weight?: number; // in kg
   height?: number; // in cm
   bmi?: number;
@@ -39,6 +40,11 @@ const clinicalRecordSchema = new Schema<IClinicalRecord>(
       type: Schema.Types.ObjectId,
       ref: 'Business',
       required: [true, 'Business reference is required'],
+    },
+    reservation: {
+      type: Schema.Types.ObjectId,
+      ref: 'Reservation',
+      index: true,
     },
     weight: {
       type: Number,
@@ -126,6 +132,7 @@ const clinicalRecordSchema = new Schema<IClinicalRecord>(
 clinicalRecordSchema.index({ user: 1, createdAt: -1 });
 clinicalRecordSchema.index({ specialist: 1 });
 clinicalRecordSchema.index({ business: 1 });
+clinicalRecordSchema.index({ reservation: 1 }, { unique: true, sparse: true });
 
 export const ClinicalRecord = mongoose.model<IClinicalRecord>(
   'ClinicalRecord',

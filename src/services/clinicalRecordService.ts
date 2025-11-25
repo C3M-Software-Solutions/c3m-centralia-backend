@@ -2,11 +2,13 @@ import { ClinicalRecord } from '../models/ClinicalRecord.js';
 import { Attachment } from '../models/Attachment.js';
 import { Specialist } from '../models/Specialist.js';
 import { Business } from '../models/Business.js';
+import { Reservation } from '../models/Reservation.js';
 
 export interface CreateClinicalRecordData {
   patientId: string;
   businessId: string;
   specialistId: string;
+  reservationId?: string;
   diagnosis: string;
   treatment: string;
   notes?: string;
@@ -59,10 +61,39 @@ export class ClinicalRecordService {
       throw new Error('Business not found');
     }
 
+    // If reservationId is provided, validate it
+    if (data.reservationId) {
+      const reservation = await Reservation.findById(data.reservationId);
+
+      if (!reservation) {
+        throw new Error('Reservation not found');
+      }
+
+      // Verify reservation belongs to the correct patient, specialist, and business
+      if (reservation.user.toString() !== data.patientId) {
+        throw new Error('Reservation does not belong to this patient');
+      }
+
+      if (reservation.specialist.toString() !== data.specialistId) {
+        throw new Error('Reservation does not belong to this specialist');
+      }
+
+      if (reservation.business.toString() !== data.businessId) {
+        throw new Error('Reservation does not belong to this business');
+      }
+
+      // Check if a clinical record already exists for this reservation
+      const existingRecord = await ClinicalRecord.findOne({ reservation: data.reservationId });
+      if (existingRecord) {
+        throw new Error('Clinical record already exists for this reservation');
+      }
+    }
+
     const clinicalRecord = await ClinicalRecord.create({
       user: data.patientId,
       business: data.businessId,
       specialist: data.specialistId,
+      reservation: data.reservationId,
       diagnosis: data.diagnosis,
       treatment: data.treatment,
       notes: data.notes,
@@ -114,6 +145,38 @@ export class ClinicalRecordService {
     if (!isPatient && !isAdmin) {
       // Check if user is the specialist
       const specialistId = record.get('specialist')?._id || record.get('specialist');
+      const specialist = await Specialist.findOne({
+        _id: specialistId,
+        user: userId,
+      });
+
+      if (!specialist) {
+        throw new Error('Unauthorized to view this clinical record');
+      }
+    }
+
+    return record;
+  }
+
+  async getClinicalRecordByReservation(reservationId: string, userId: string, userRole: string) {
+    const record = await ClinicalRecord.findOne({ reservation: reservationId })
+      .populate('user', 'name email phone')
+      .populate('business', 'name')
+      .populate('specialist')
+      .populate('reservation');
+
+    if (!record) {
+      throw new Error('Clinical record not found for this reservation');
+    }
+
+    // Check authorization
+    const patientId = record.user._id || record.get('user');
+    const isPatient = patientId?.toString() === userId;
+    const isAdmin = userRole === 'admin';
+
+    if (!isPatient && !isAdmin) {
+      // Check if user is the specialist
+      const specialistId = record.specialist._id || record.get('specialist');
       const specialist = await Specialist.findOne({
         _id: specialistId,
         user: userId,

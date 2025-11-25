@@ -7,6 +7,7 @@ import {
   updateReservationStatus,
   checkAvailability,
 } from '../controllers/reservationController.js';
+import { getClinicalRecordByReservation } from '../controllers/clinicalRecordController.js';
 import { authenticate } from '../middleware/auth.js';
 import { validate } from '../middleware/validate.js';
 

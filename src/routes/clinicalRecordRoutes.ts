@@ -15,6 +15,7 @@ const router = Router();
 const clinicalRecordValidation = [
   body('user').notEmpty().withMessage('User ID is required'),
   body('business').notEmpty().withMessage('Business ID is required'),
+  body('reservation').optional().isMongoId().withMessage('Invalid reservation ID'),
   body('diagnosis').trim().notEmpty().withMessage('Diagnosis is required'),
   body('treatment').trim().notEmpty().withMessage('Treatment is required'),
   body('weight').optional().isFloat({ min: 0 }).withMessage('Weight must be positive'),

@@ -1163,6 +1163,60 @@
         }
       }
     },
+    "/api/reservations/{id}/clinical-record": {
+      "get": {
+        "summary": "Get clinical record for a reservation",
+        "tags": ["Reservations"],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Reservation ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Clinical record details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "example": "success"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "clinicalRecord": {
+                          "$ref": "#/components/schemas/ClinicalRecord"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not authorized to view this record"
+          },
+          "404": {
+            "description": "Clinical record not found for this reservation"
+          }
+        }
+      }
+    },
     "/api/reservations/{id}/status": {
       "put": {
         "summary": "Update reservation status",
