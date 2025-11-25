@@ -23,6 +23,13 @@ const reservationValidation = [
   body('notes').optional().trim(),
 ];
 
+const updateStatusValidation = [
+  body('status')
+    .isIn(['pending', 'confirmed', 'cancelled', 'completed', 'no-show'])
+    .withMessage('Invalid status'),
+  body('cancellationReason').optional().trim(),
+];
+
 /**
  * @swagger
  * /api/reservations/availability:
@@ -70,13 +77,6 @@ const reservationValidation = [
  *                     serviceDuration:
  *                       type: number
  */
-const updateStatusValidation = [
-  body('status')
-    .isIn(['pending', 'confirmed', 'cancelled', 'completed', 'no-show'])
-    .withMessage('Invalid status'),
-  body('cancellationReason').optional().trim(),
-];
-
 router.post('/', authenticate, validate(reservationValidation), createReservation);
 
 /**

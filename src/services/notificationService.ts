@@ -53,12 +53,14 @@ export class NotificationService {
 
     try {
       const fromEmail = config.smtp.fromEmail || config.smtp.user;
+      console.log(`Sending email to ${data.to}: ${data.subject}`);
       await this.transporter.sendMail({
         from: `"${config.smtp.fromName}" <${fromEmail}>`,
         to: data.to,
         subject: data.subject,
         html: data.html,
       });
+      console.log('send');
       console.log(`Email sent successfully to ${data.to}: ${data.subject}`);
     } catch (error) {
       // Log error but don't throw - allows system to continue working without email
@@ -349,6 +351,7 @@ export class NotificationService {
   async sendReservationCreated(reservation: IReservation): Promise<void> {
     try {
       const data = this.extractNotificationData(reservation);
+      console.log('Sending reservation created notification:', data);
 
       // Get specialist email
       const specialistEmail =

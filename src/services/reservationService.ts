@@ -95,6 +95,7 @@ export class ReservationService {
         populate: { path: 'user', select: 'name email' },
       })
       .populate('service', 'name duration price');
+    console.log('Populated Reservation:', populatedReservation);
 
     // Send notification to specialist
     if (populatedReservation) {
