@@ -64,8 +64,8 @@ export class NotificationService {
       });
       console.log(`Email sent successfully to ${data.to}: ${data.subject}`);
     } catch (error) {
-      console.error('Error sending email:', error);
-      throw error;
+      // Log error but don't throw - allows system to continue working without email
+      console.error('Error sending email (email notifications disabled):', error);
     }
   }
 
