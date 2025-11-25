@@ -503,78 +503,47 @@ Gestor del sistema con acceso total.
 
 ---
 
-### 🟡 IMPORTANTES (Pendientes - 4)
+### 🟡 IMPORTANTES (Pendientes - 3)
 
-#### 2. Sistema de Notificaciones de Reservaciones
+#### ✅ 2. Sistema de Notificaciones de Reservaciones
 
-**Prioridad:** 🟡 Alta  
-**Estimación:** 3-4 días
+**Status:** ✅ COMPLETADO  
+**Tiempo Implementado:** 3 días
 
 **Descripción:**
-Implementar sistema de notificaciones por email cuando se crean, modifican o cancelan reservaciones.
+Sistema de notificaciones por email cuando se crean, modifican o cancelan reservaciones.
 
-**Casos de Uso:**
+**✅ Implementado:**
 
-- Cliente crea reservación → Notificar a especialista
-- Especialista confirma cita → Notificar a cliente
-- Cualquiera cancela → Notificar a la otra parte
-- Cita próxima (24h antes) → Recordatorio automático
+1. **NotificationService** (`src/services/notificationService.ts`)
+   - 4 tipos de emails: created, confirmed, cancelled, reminder
+   - Templates HTML responsivos con estilos inline
+   - Graceful degradation (funciona sin SMTP configurado)
 
-**Componentes a Implementar:**
+2. **ReminderService** (`src/services/reminderService.ts`)
+   - Cron job que corre cada hora
+   - Envía recordatorios 24 horas antes de la cita
+   - Auto-start en inicialización del servidor
+   - Marca flag `reminderSent` en reservaciones
 
-```typescript
-// src/services/notificationService.ts
-interface Notification {
-  type:
-    | 'reservation_created'
-    | 'reservation_confirmed'
-    | 'reservation_cancelled'
-    | 'reservation_reminder';
-  recipient: string; // email
-  data: {
-    userName: string;
-    specialistName: string;
-    serviceName: string;
-    startDate: Date;
-    businessName: string;
-    cancellationReason?: string;
-  };
-}
+3. **Integración en ReservationService**
+   - Email al crear reservación
+   - Email al confirmar/cancelar
+   - Manejo de errores sin romper flujo
 
-class NotificationService {
-  async sendReservationCreated(reservation: IReservation): Promise<void>;
-  async sendReservationConfirmed(reservation: IReservation): Promise<void>;
-  async sendReservationCancelled(reservation: IReservation): Promise<void>;
-  async sendReservationReminder(reservation: IReservation): Promise<void>;
-}
-```
+4. **Tests de Integración** (17 tests pasando)
+   - `tests/integration/notification/notification.test.ts` (5 tests)
+   - `tests/integration/notification/reminder.test.ts` (12 tests)
+   - Total: 354/354 tests pasando
 
-**Integración:**
+5. **Documentación**
+   - `NOTIFICATIONS.md` - Guía completa de configuración
+   - Swagger actualizado con campo `reminderSent` y tag "Notifications"
 
-- Modificar `reservationService.createReservation()` para enviar notificación
-- Modificar `reservationService.updateReservationStatus()` para notificar cambios
-- Agregar job scheduler para recordatorios (node-cron)
+**Dependencias Utilizadas:**
 
-**Templates de Email:**
-
-- reservation-created.html
-- reservation-confirmed.html
-- reservation-cancelled.html
-- reservation-reminder.html
-
-**Tests Necesarios:**
-
-- ✅ Envía email al crear reservación
-- ✅ Envía email al confirmar
-- ✅ Envía email al cancelar con razón
-- ✅ No envía email si falla la creación
-- ✅ Recordatorio se envía 24h antes
-
-**Dependencias:**
-
-- nodemailer (ya instalado)
-- node-cron para recordatorios automáticos
-- Plantillas HTML de emails
+- nodemailer 6.9.7
+- node-cron 3.0.3
 
 ---
 
@@ -873,26 +842,24 @@ GET /api/specialists/dashboard
 
 ---
 
-#### 8. Recordatorios Automáticos
+#### ✅ 8. Recordatorios Automáticos
 
-**Prioridad:** 🟢 Media  
-**Estimación:** 2 días
+**Status:** ✅ PARCIALMENTE COMPLETADO (parte del Gap #2)  
+**Prioridad:** 🟢 Media
 
-**Descripción:**
-Sistema automatizado de recordatorios vía email/SMS.
+**Implementado:**
 
-**Tipos de Recordatorios:**
+- ✅ Recordatorio 24 horas antes de la cita (vía cron job)
+- ✅ Sistema automatizado con node-cron
+- ✅ Flag `reminderSent` en modelo Reservation
 
-- 24 horas antes de la cita
-- 2 horas antes de la cita
-- Seguimiento post-consulta (pedir review)
+**Pendiente (si se desea extender):**
 
-**Implementación:**
+- ⏳ Recordatorio 2 horas antes de la cita
+- ⏳ Seguimiento post-consulta (pedir review)
+- ⏳ Notificaciones vía SMS (además de email)
 
-- node-cron para ejecutar cada hora
-- Buscar citas próximas que no tienen recordatorio enviado
-- Marcar flag `reminderSent` en reservación
-- Enviar email/SMS
+**Estimación para pendientes:** 1-2 días
 
 ---
 

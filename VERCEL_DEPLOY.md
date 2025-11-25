@@ -2,6 +2,26 @@
 
 Este proyecto está configurado para desplegarse en Vercel.
 
+## ⚠️ Consideraciones Importantes de Vercel (Serverless)
+
+Vercel es una plataforma **serverless**, lo que significa:
+
+- Las funciones se ejecutan solo cuando reciben requests
+- No hay procesos en ejecución continua
+- Los **cron jobs nativos NO están en el plan gratuito** (requieren plan Pro $20/mes)
+
+### 🔧 Solución para Recordatorios Automáticos (Plan Gratuito)
+
+El sistema de recordatorios usa **GitHub Actions** (100% gratis):
+
+- Ver configuración en `.github/workflows/send-reminders.yml`
+- Ejecuta el endpoint `/api/cron/send-reminders` cada hora
+- Requiere configurar `CRON_SECRET` (ver abajo)
+
+**Alternativa:** Usa https://cron-job.org (gratis) para llamar al endpoint cada hora.
+
+---
+
 ## Variables de Entorno Requeridas
 
 Configura las siguientes variables en el dashboard de Vercel:
@@ -48,7 +68,15 @@ Si usas Cloudinary:
 - `EMAIL_USER`
 - `EMAIL_PASSWORD`
 
-## Pasos para Deploy
+### Cron Job Security (Requerido para Recordatorios)
+
+- `CRON_SECRET` - Token secreto para proteger el endpoint de cron jobs
+  - Genera un token aleatorio largo (ej: `mi_token_super_secreto_123abc`)
+  - Debe ser el mismo en GitHub Secrets y Vercel Environment Variables
+
+---
+
+## 🚀 Pasos para Deploy
 
 1. **Instala Vercel CLI** (opcional):
 
@@ -63,10 +91,36 @@ Si usas Cloudinary:
    ```
 
 3. **Deploy desde GitHub**:
-   - Conecta tu repositorio en https://vercel.com
+   - Conecta tu repositorio en Vercel
    - Vercel detectará automáticamente la configuración
    - Configura las variables de entorno
    - Deploy automático en cada push a `main`
+
+4. **Configurar GitHub Actions para Cron Jobs** (Gratis):
+   - Ve a tu repositorio en GitHub → Settings → Secrets and variables → Actions
+   - Agrega: `CRON_SECRET` con el mismo valor que en Vercel
+   - El workflow `.github/workflows/send-reminders.yml` ya está configurado
+   - Se ejecutará automáticamente cada hora
+
+---
+
+## ✅ Verificación Post-Deploy
+
+### Health Check
+
+```bash
+curl https://tu-proyecto.vercel.app/health
+```
+
+### Test Manual de Recordatorios
+
+```bash
+curl -X POST https://tu-proyecto.vercel.app/api/cron/send-reminders \
+  -H "x-cron-secret: tu_secreto" \
+  -H "Content-Type: application/json"
+```
+
+---
 
 ## Endpoints de la API
 

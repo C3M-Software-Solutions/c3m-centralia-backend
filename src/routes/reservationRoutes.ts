@@ -88,7 +88,9 @@ router.post('/', authenticate, validate(reservationValidation), createReservatio
  *       Creates a new reservation for a client with a specialist.
  *       **Important**: The `endDate` is automatically calculated based on the service duration.
  *       You only need to provide the `startDate` and the system will calculate `endDate = startDate + service.duration`.
- *     tags: [Reservations]
+ *
+ *       **Automatic Notification**: A confirmation email is automatically sent to the client after successful creation.
+ *     tags: [Reservations, Notifications]
  *     security:
  *       - bearerAuth: []
  *     requestBody:
@@ -123,7 +125,7 @@ router.post('/', authenticate, validate(reservationValidation), createReservatio
  *                 example: First time appointment
  *     responses:
  *       201:
- *         description: Reservation created successfully. The response includes the auto-calculated endDate.
+ *         description: Reservation created successfully. The response includes the auto-calculated endDate. Confirmation email sent to client.
  *         content:
  *           application/json:
  *             schema:
@@ -299,7 +301,13 @@ router.get('/:id/clinical-record', authenticate, getClinicalRecordByReservation)
  * /api/reservations/{id}/status:
  *   put:
  *     summary: Update reservation status
- *     tags: [Reservations]
+ *     description: |
+ *       Updates the status of a reservation.
+ *
+ *       **Automatic Notifications**:
+ *       - When status changes to 'confirmed', a confirmation email is sent to the client
+ *       - When status changes to 'cancelled', a cancellation email is sent to the client
+ *     tags: [Reservations, Notifications]
  *     security:
  *       - bearerAuth: []
  *     parameters:
@@ -325,7 +333,7 @@ router.get('/:id/clinical-record', authenticate, getClinicalRecordByReservation)
  *                 type: string
  *     responses:
  *       200:
- *         description: Status updated successfully
+ *         description: Status updated successfully. Notification email sent if status is 'confirmed' or 'cancelled'.
  *       403:
  *         description: Forbidden
  *       404:

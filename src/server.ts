@@ -20,8 +20,14 @@ const app: Express = express();
 // Connect to database
 connectDatabase();
 
-// Start reminder service (runs every hour)
-reminderService.start();
+// Start reminder service ONLY in non-serverless environments
+// In Vercel, use Vercel Cron Jobs to call /api/cron/send-reminders
+if (process.env.VERCEL !== '1' && process.env.NODE_ENV !== 'serverless') {
+  console.log('Starting reminder service (cron job)...');
+  reminderService.start();
+} else {
+  console.log('Serverless environment detected. Use Vercel Cron Jobs for reminders.');
+}
 
 // Middleware
 app.use(
@@ -130,6 +136,7 @@ import {
   uploadRoutes,
   serviceRoutes,
   specialistRoutes,
+  cronRoutes,
 } from './routes/index.js';
 
 app.use('/api/auth', authRoutes);
@@ -140,6 +147,7 @@ app.use('/api/specialists', specialistRoutes); // Direct access for available-sl
 app.use('/api/reservations', reservationRoutes);
 app.use('/api/clinical-records', clinicalRecordRoutes);
 app.use('/api/upload', uploadRoutes);
+app.use('/api/cron', cronRoutes); // Cron endpoints for Vercel Cron Jobs
 
 // Error handling
 app.use(notFound);

@@ -280,10 +280,17 @@ const options: swaggerJsdoc.Options = {
               type: 'string',
               enum: ['pending', 'confirmed', 'cancelled', 'completed'],
               example: 'pending',
+              description: 'Reservation status. Email notifications are sent on status changes.',
             },
             notes: {
               type: 'string',
               example: 'First time appointment',
+            },
+            reminderSent: {
+              type: 'boolean',
+              example: false,
+              description:
+                'Flag to track if 24-hour reminder email has been sent. Auto-set by cron job.',
             },
             createdAt: {
               type: 'string',
@@ -417,7 +424,8 @@ const options: swaggerJsdoc.Options = {
       },
       {
         name: 'Reservations',
-        description: 'Appointment booking endpoints',
+        description:
+          'Appointment booking endpoints. Automatic email notifications are sent on create, confirm, and cancel. 24-hour reminders are sent by cron job.',
       },
       {
         name: 'Clinical Records',
@@ -426,6 +434,11 @@ const options: swaggerJsdoc.Options = {
       {
         name: 'Upload',
         description: 'File upload and management endpoints (supports local, S3, and Cloudinary)',
+      },
+      {
+        name: 'Notifications',
+        description:
+          'Automatic email notification system. Sends emails on reservation lifecycle events (create, confirm, cancel) and 24-hour appointment reminders via cron job (runs hourly).',
       },
     ],
   },
