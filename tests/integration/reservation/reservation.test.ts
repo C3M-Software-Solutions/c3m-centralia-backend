@@ -358,4 +358,144 @@ describe('Reservation Integration Tests', () => {
       await request(app).get('/api/reservations/availability').expect(400);
     });
   });
+
+  describe('GET /api/reservations - Advanced Filters', () => {
+    let specialist2: any;
+
+    beforeEach(async () => {
+      // Create second specialist
+      const specialistUser2 = await User.create({
+        name: 'Specialist 2',
+        email: 'specialist2@test.com',
+        password: await hashPassword('password123'),
+        role: 'specialist',
+      });
+
+      specialist2 = await Specialist.create({
+        user: specialistUser2._id,
+        business: business._id,
+        specialty: 'Cardiology',
+        isActive: true,
+      });
+
+      // Create reservations on different dates and with different statuses
+      const today = new Date('2025-11-24T10:00:00Z');
+      const tomorrow = new Date('2025-11-25T14:00:00Z');
+      const nextWeek = new Date('2025-12-01T09:00:00Z');
+
+      await Reservation.create({
+        user: clientUser._id,
+        business: business._id,
+        specialist: specialist._id,
+        service: service._id,
+        startDate: today,
+        endDate: new Date(today.getTime() + 60 * 60000),
+        status: 'pending',
+      });
+
+      await Reservation.create({
+        user: clientUser._id,
+        business: business._id,
+        specialist: specialist2._id,
+        service: service._id,
+        startDate: tomorrow,
+        endDate: new Date(tomorrow.getTime() + 60 * 60000),
+        status: 'confirmed',
+      });
+
+      await Reservation.create({
+        user: clientUser._id,
+        business: business._id,
+        specialist: specialist._id,
+        service: service._id,
+        startDate: nextWeek,
+        endDate: new Date(nextWeek.getTime() + 60 * 60000),
+        status: 'completed',
+      });
+    });
+
+    it('should filter reservations by status', async () => {
+      const response = await request(app)
+        .get('/api/reservations')
+        .set('Authorization', `Bearer ${clientToken}`)
+        .query({ status: 'pending' })
+        .expect(200);
+
+      expect(response.body.status).toBe('success');
+      expect(response.body.results).toBe(1);
+      expect(response.body.data.reservations[0].status).toBe('pending');
+    });
+
+    it('should filter reservations by specialist', async () => {
+      const response = await request(app)
+        .get('/api/reservations')
+        .set('Authorization', `Bearer ${clientToken}`)
+        .query({ specialist: specialist2._id.toString() })
+        .expect(200);
+
+      expect(response.body.status).toBe('success');
+      expect(response.body.results).toBe(1);
+      expect(response.body.data.reservations[0].specialist._id.toString()).toBe(
+        specialist2._id.toString()
+      );
+    });
+
+    it('should filter reservations by specific date', async () => {
+      const response = await request(app)
+        .get('/api/reservations')
+        .set('Authorization', `Bearer ${clientToken}`)
+        .query({ date: '2025-11-24' })
+        .expect(200);
+
+      expect(response.body.status).toBe('success');
+      expect(response.body.results).toBeGreaterThanOrEqual(1);
+      if (response.body.results > 0) {
+        const reservationDate = new Date(response.body.data.reservations[0].startDate);
+        expect(reservationDate.getUTCDate()).toBe(24);
+        expect(reservationDate.getUTCMonth()).toBe(10); // November (0-indexed)
+      }
+    });
+
+    it('should filter reservations by date range', async () => {
+      const response = await request(app)
+        .get('/api/reservations')
+        .set('Authorization', `Bearer ${clientToken}`)
+        .query({
+          dateFrom: '2025-11-24',
+          dateTo: '2025-11-26',
+        })
+        .expect(200);
+
+      expect(response.body.status).toBe('success');
+      expect(response.body.results).toBe(2);
+    });
+
+    it('should combine multiple filters', async () => {
+      const response = await request(app)
+        .get('/api/reservations')
+        .set('Authorization', `Bearer ${clientToken}`)
+        .query({
+          specialist: specialist._id.toString(),
+          status: 'pending',
+        })
+        .expect(200);
+
+      expect(response.body.status).toBe('success');
+      expect(response.body.results).toBe(1);
+      expect(response.body.data.reservations[0].status).toBe('pending');
+      expect(response.body.data.reservations[0].specialist._id.toString()).toBe(
+        specialist._id.toString()
+      );
+    });
+
+    it('should return all reservations when no filters applied', async () => {
+      const response = await request(app)
+        .get('/api/reservations')
+        .set('Authorization', `Bearer ${clientToken}`)
+        .expect(200);
+
+      expect(response.body.status).toBe('success');
+      expect(response.body.results).toBe(3);
+    });
+  });
 });

@@ -1023,7 +1023,7 @@
         }
       },
       "get": {
-        "summary": "Get all reservations",
+        "summary": "Get all reservations with advanced filtering",
         "tags": ["Reservations"],
         "security": [
           {
@@ -1036,9 +1036,47 @@
             "name": "status",
             "schema": {
               "type": "string",
-              "enum": ["pending", "confirmed", "cancelled", "completed"]
+              "enum": ["pending", "confirmed", "cancelled", "completed", "no-show"]
             },
-            "description": "Filter by status"
+            "description": "Filter by reservation status"
+          },
+          {
+            "in": "query",
+            "name": "specialist",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Filter by specialist ID"
+          },
+          {
+            "in": "query",
+            "name": "date",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            },
+            "description": "Filter by specific date (YYYY-MM-DD) - returns reservations on that day",
+            "example": "2025-11-24"
+          },
+          {
+            "in": "query",
+            "name": "dateFrom",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            },
+            "description": "Filter reservations from this date (inclusive)",
+            "example": "2025-11-20"
+          },
+          {
+            "in": "query",
+            "name": "dateTo",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            },
+            "description": "Filter reservations until this date (inclusive)",
+            "example": "2025-11-30"
           },
           {
             "in": "query",
@@ -1047,7 +1085,7 @@
               "type": "string",
               "format": "date"
             },
-            "description": "Filter from date"
+            "description": "(Deprecated - use dateFrom) Filter from date"
           },
           {
             "in": "query",
@@ -1056,12 +1094,12 @@
               "type": "string",
               "format": "date"
             },
-            "description": "Filter to date"
+            "description": "(Deprecated - use dateTo) Filter to date"
           }
         ],
         "responses": {
           "200": {
-            "description": "List of reservations",
+            "description": "List of reservations matching filters",
             "content": {
               "application/json": {
                 "schema": {
@@ -1070,6 +1108,10 @@
                     "status": {
                       "type": "string",
                       "example": "success"
+                    },
+                    "results": {
+                      "type": "number",
+                      "example": 5
                     },
                     "data": {
                       "type": "object",
@@ -1087,7 +1129,8 @@
               }
             }
           }
-        }
+        },
+        "description": "Returns reservations based on user role:\n- **Client**: Only their own reservations\n- **Specialist**: Only reservations assigned to them\n- **Admin**: All reservations for their business\n\n**Filter Examples:**\n- Get today's reservations: `?date=2025-11-24`\n- Get this week's reservations: `?dateFrom=2025-11-20&dateTo=2025-11-26`\n- Get pending reservations for a specialist: `?specialist=507f1f77bcf86cd799439011&status=pending`\n"
       }
     },
     "/api/reservations/{id}": {

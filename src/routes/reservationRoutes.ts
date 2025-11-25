@@ -138,7 +138,7 @@ router.get('/', authenticate, getReservations);
  * @swagger
  * /api/reservations:
  *   get:
- *     summary: Get all reservations
+ *     summary: Get all reservations with advanced filtering
  *     tags: [Reservations]
  *     security:
  *       - bearerAuth: []
@@ -147,23 +147,49 @@ router.get('/', authenticate, getReservations);
  *         name: status
  *         schema:
  *           type: string
- *           enum: [pending, confirmed, cancelled, completed]
- *         description: Filter by status
+ *           enum: [pending, confirmed, cancelled, completed, no-show]
+ *         description: Filter by reservation status
+ *       - in: query
+ *         name: specialist
+ *         schema:
+ *           type: string
+ *         description: Filter by specialist ID
+ *       - in: query
+ *         name: date
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: Filter by specific date (YYYY-MM-DD) - returns reservations on that day
+ *         example: "2025-11-24"
+ *       - in: query
+ *         name: dateFrom
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: Filter reservations from this date (inclusive)
+ *         example: "2025-11-20"
+ *       - in: query
+ *         name: dateTo
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: Filter reservations until this date (inclusive)
+ *         example: "2025-11-30"
  *       - in: query
  *         name: startDate
  *         schema:
  *           type: string
  *           format: date
- *         description: Filter from date
+ *         description: (Deprecated - use dateFrom) Filter from date
  *       - in: query
  *         name: endDate
  *         schema:
  *           type: string
  *           format: date
- *         description: Filter to date
+ *         description: (Deprecated - use dateTo) Filter to date
  *     responses:
  *       200:
- *         description: List of reservations
+ *         description: List of reservations matching filters
  *         content:
  *           application/json:
  *             schema:
@@ -172,6 +198,9 @@ router.get('/', authenticate, getReservations);
  *                 status:
  *                   type: string
  *                   example: success
+ *                 results:
+ *                   type: number
+ *                   example: 5
  *                 data:
  *                   type: object
  *                   properties:
@@ -179,6 +208,16 @@ router.get('/', authenticate, getReservations);
  *                       type: array
  *                       items:
  *                         $ref: '#/components/schemas/Reservation'
+ *     description: |
+ *       Returns reservations based on user role:
+ *       - **Client**: Only their own reservations
+ *       - **Specialist**: Only reservations assigned to them
+ *       - **Admin**: All reservations for their business
+ *
+ *       **Filter Examples:**
+ *       - Get today's reservations: `?date=2025-11-24`
+ *       - Get this week's reservations: `?dateFrom=2025-11-20&dateTo=2025-11-26`
+ *       - Get pending reservations for a specialist: `?specialist=507f1f77bcf86cd799439011&status=pending`
  */
 router.get('/availability', checkAvailability);
 
@@ -204,6 +243,44 @@ router.get('/availability', checkAvailability);
  *         description: Reservation not found
  */
 router.get('/:id', authenticate, getReservationById);
+
+/**
+ * @swagger
+ * /api/reservations/{id}/clinical-record:
+ *   get:
+ *     summary: Get clinical record for a reservation
+ *     tags: [Reservations]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Reservation ID
+ *     responses:
+ *       200:
+ *         description: Clinical record details
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: success
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     clinicalRecord:
+ *                       $ref: '#/components/schemas/ClinicalRecord'
+ *       404:
+ *         description: Clinical record not found for this reservation
+ *       403:
+ *         description: Not authorized to view this record
+ */
+router.get('/:id/clinical-record', authenticate, getClinicalRecordByReservation);
 
 /**
  * @swagger

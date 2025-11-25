@@ -55,7 +55,7 @@ export const getReservations = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const { status, specialist, startDate, endDate } = req.query;
+    const { status, specialist, startDate, endDate, date, dateFrom, dateTo } = req.query;
     const userId = req.user?.userId;
     const userRole = req.user?.role;
 
@@ -79,12 +79,56 @@ export const getReservations = async (
       filter.specialistId = specialist as string;
     }
 
-    if (startDate) {
-      filter.startDate = new Date(startDate as string);
-    }
+    // Handle date filtering
+    // Priority: date > dateFrom/dateTo > startDate/endDate (backward compatibility)
+    if (date) {
+      // Filter by specific date (startDate on that day in UTC)
+      const specificDate = new Date(date as string);
+      const startOfDay = new Date(
+        Date.UTC(
+          specificDate.getUTCFullYear(),
+          specificDate.getUTCMonth(),
+          specificDate.getUTCDate(),
+          0,
+          0,
+          0,
+          0
+        )
+      );
+      const endOfDay = new Date(
+        Date.UTC(
+          specificDate.getUTCFullYear(),
+          specificDate.getUTCMonth(),
+          specificDate.getUTCDate(),
+          23,
+          59,
+          59,
+          999
+        )
+      );
 
-    if (endDate) {
-      filter.endDate = new Date(endDate as string);
+      filter.startDate = startOfDay;
+      filter.endDate = endOfDay;
+    } else if (dateFrom || dateTo) {
+      // Filter by date range
+      if (dateFrom) {
+        const fromDate = new Date(dateFrom as string);
+        fromDate.setHours(0, 0, 0, 0);
+        filter.startDate = fromDate;
+      }
+      if (dateTo) {
+        const toDate = new Date(dateTo as string);
+        toDate.setHours(23, 59, 59, 999);
+        filter.endDate = toDate;
+      }
+    } else {
+      // Backward compatibility
+      if (startDate) {
+        filter.startDate = new Date(startDate as string);
+      }
+      if (endDate) {
+        filter.endDate = new Date(endDate as string);
+      }
     }
 
     const reservations = await reservationService.getReservations(filter);
