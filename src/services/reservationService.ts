@@ -2,6 +2,7 @@ import { Reservation } from '../models/Reservation.js';
 import { Service } from '../models/Service.js';
 import { Specialist } from '../models/Specialist.js';
 import { Types } from 'mongoose';
+import { notificationService } from './notificationService.js';
 
 export interface CreateReservationData {
   userId: string;
@@ -89,8 +90,21 @@ export class ReservationService {
     const populatedReservation = await Reservation.findById(reservation._id)
       .populate('user', 'name email phone')
       .populate('business', 'name')
-      .populate('specialist')
+      .populate({
+        path: 'specialist',
+        populate: { path: 'user', select: 'name email' },
+      })
       .populate('service', 'name duration price');
+
+    // Send notification to specialist
+    if (populatedReservation) {
+      try {
+        await notificationService.sendReservationCreated(populatedReservation);
+      } catch (error) {
+        console.error('Failed to send notification:', error);
+        // Don't fail the reservation if notification fails
+      }
+    }
 
     return populatedReservation;
   }
@@ -192,6 +206,9 @@ export class ReservationService {
       }
     }
 
+    // Store old status to detect changes
+    const oldStatus = reservation.status;
+
     // Update fields
     if (data.status) reservation.status = data.status;
     if (data.cancellationReason) reservation.cancellationReason = data.cancellationReason;
@@ -202,8 +219,25 @@ export class ReservationService {
     const updatedReservation = await Reservation.findById(reservationId)
       .populate('user', 'name email phone')
       .populate('business', 'name')
-      .populate('specialist')
+      .populate({
+        path: 'specialist',
+        populate: { path: 'user', select: 'name email' },
+      })
       .populate('service', 'name duration price');
+
+    // Send notifications based on status change
+    if (updatedReservation && data.status && oldStatus !== data.status) {
+      try {
+        if (data.status === 'confirmed') {
+          await notificationService.sendReservationConfirmed(updatedReservation);
+        } else if (data.status === 'cancelled') {
+          await notificationService.sendReservationCancelled(updatedReservation);
+        }
+      } catch (error) {
+        console.error('Failed to send notification:', error);
+        // Don't fail the update if notification fails
+      }
+    }
 
     return updatedReservation;
   }

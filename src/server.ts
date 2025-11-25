@@ -9,6 +9,7 @@ import { connectDatabase } from './config/database.js';
 import { config } from './config/index.js';
 import { errorHandler, notFound } from './middleware/errorHandler.js';
 import { swaggerSpec } from './swagger.js';
+import { reminderService } from './services/reminderService.js';
 
 // Load environment variables
 dotenv.config();
@@ -18,6 +19,9 @@ const app: Express = express();
 
 // Connect to database
 connectDatabase();
+
+// Start reminder service (runs every hour)
+reminderService.start();
 
 // Middleware
 app.use(
