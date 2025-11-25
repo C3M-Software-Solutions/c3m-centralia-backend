@@ -6,7 +6,7 @@ import dotenv from 'dotenv';
 import path from 'path';
 import swaggerUi from 'swagger-ui-express';
 import { connectDatabase } from './config/database.js';
-import { config } from './config/index.js';
+// import { config } from './config/index.js';
 import { errorHandler, notFound } from './middleware/errorHandler.js';
 import { swaggerSpec } from './swagger.js';
 import { reminderService } from './services/reminderService.js';
@@ -44,11 +44,15 @@ app.use(
   })
 );
 
-// Security headers
+// Security headers - CORS configuration with preflight handling
 app.use(
   cors({
-    origin: config.server.corsOrigin,
+    origin: '*', // Allow all origins (or specify your Flutter app origin)
     credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
+    exposedHeaders: ['Content-Range', 'X-Content-Range'],
+    maxAge: 86400, // Cache preflight for 24 hours
   })
 );
 app.use(morgan('dev')); // Logging
