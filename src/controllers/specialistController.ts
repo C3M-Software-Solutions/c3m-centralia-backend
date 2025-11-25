@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { businessService } from '../services/index.js';
+import { businessService, availabilityService } from '../services/index.js';
 
 export const createSpecialist = async (req: Request, res: Response) => {
   try {
@@ -145,6 +145,51 @@ export const deleteSpecialist = async (req: Request, res: Response) => {
     return res.status(400).json({
       status: 'error',
       message: error instanceof Error ? error.message : 'Failed to delete specialist',
+    });
+  }
+};
+
+export const getAvailableSlots = async (req: Request, res: Response) => {
+  try {
+    const { specialistId } = req.params;
+    const { date, serviceId } = req.query;
+
+    if (!date || typeof date !== 'string') {
+      return res.status(400).json({
+        status: 'error',
+        message: 'Date query parameter is required (format: YYYY-MM-DD)',
+      });
+    }
+
+    // Parse date
+    const requestedDate = new Date(date);
+    if (isNaN(requestedDate.getTime())) {
+      return res.status(400).json({
+        status: 'error',
+        message: 'Invalid date format. Use YYYY-MM-DD',
+      });
+    }
+
+    const slots = await availabilityService.getAvailableSlots(
+      specialistId,
+      requestedDate,
+      serviceId as string | undefined
+    );
+
+    return res.status(200).json({
+      status: 'success',
+      data: {
+        date,
+        specialistId,
+        serviceId: serviceId || null,
+        availableSlots: slots,
+        totalSlots: slots.length,
+      },
+    });
+  } catch (error) {
+    return res.status(400).json({
+      status: 'error',
+      message: error instanceof Error ? error.message : 'Failed to get available slots',
     });
   }
 };

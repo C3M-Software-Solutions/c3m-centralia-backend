@@ -6,6 +6,7 @@ import {
   getSpecialistById,
   updateSpecialist,
   deleteSpecialist,
+  getAvailableSlots,
 } from '../controllers/specialistController.js';
 import { authenticate } from '../middleware/auth.js';
 import { validate } from '../middleware/validate.js';
@@ -253,5 +254,87 @@ router.put('/:specialistId', authenticate, updateSpecialist);
  *         description: Specialist not found
  */
 router.delete('/:specialistId', authenticate, deleteSpecialist);
+
+/**
+ * @swagger
+ * /api/specialists/{specialistId}/available-slots:
+ *   get:
+ *     summary: Get available time slots for a specialist
+ *     description: Returns available appointment slots for a specialist on a specific date, considering existing reservations and service duration
+ *     tags: [Specialists]
+ *     parameters:
+ *       - in: path
+ *         name: specialistId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Specialist ID
+ *       - in: query
+ *         name: date
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: date
+ *           example: "2025-11-24"
+ *         description: Date to check availability (YYYY-MM-DD format)
+ *       - in: query
+ *         name: serviceId
+ *         required: false
+ *         schema:
+ *           type: string
+ *         description: Service ID to use for slot duration (optional, defaults to 60 minutes)
+ *     responses:
+ *       200:
+ *         description: List of available time slots
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: success
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     date:
+ *                       type: string
+ *                       example: "2025-11-24"
+ *                     specialistId:
+ *                       type: string
+ *                     serviceId:
+ *                       type: string
+ *                       nullable: true
+ *                     availableSlots:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *                         properties:
+ *                           startTime:
+ *                             type: string
+ *                             format: date-time
+ *                             example: "2025-11-24T09:00:00.000Z"
+ *                           endTime:
+ *                             type: string
+ *                             format: date-time
+ *                             example: "2025-11-24T10:00:00.000Z"
+ *                     totalSlots:
+ *                       type: integer
+ *                       example: 8
+ *       400:
+ *         description: Bad request (invalid date format or parameters)
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: error
+ *                 message:
+ *                   type: string
+ *                   example: "Date query parameter is required (format: YYYY-MM-DD)"
+ */
+router.get('/:specialistId/available-slots', getAvailableSlots);
 
 export default router;
