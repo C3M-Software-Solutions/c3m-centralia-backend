@@ -110,4 +110,5 @@ businessSchema.index({ user: 1 });
 businessSchema.index({ ruc: 1 });
 businessSchema.index({ isActive: 1 });
 
-export const Business = mongoose.model<IBusiness>('Business', businessSchema);
+export const Business =
+  mongoose.models.Business || mongoose.model<IBusiness>('Business', businessSchema);

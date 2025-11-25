@@ -134,7 +134,6 @@ clinicalRecordSchema.index({ specialist: 1 });
 clinicalRecordSchema.index({ business: 1 });
 clinicalRecordSchema.index({ reservation: 1 }, { unique: true, sparse: true });
 
-export const ClinicalRecord = mongoose.model<IClinicalRecord>(
-  'ClinicalRecord',
-  clinicalRecordSchema
-);
+export const ClinicalRecord =
+  mongoose.models.ClinicalRecord ||
+  mongoose.model<IClinicalRecord>('ClinicalRecord', clinicalRecordSchema);

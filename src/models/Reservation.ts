@@ -94,4 +94,5 @@ reservationSchema.index(
   }
 );
 
-export const Reservation = mongoose.model<IReservation>('Reservation', reservationSchema);
+export const Reservation =
+  mongoose.models.Reservation || mongoose.model<IReservation>('Reservation', reservationSchema);

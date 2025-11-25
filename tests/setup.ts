@@ -23,52 +23,44 @@ export const createTestApp = (): Express => {
   app.use('/api/reservations', reservationRoutes);
   app.use('/api/clinical-records', clinicalRecordRoutes);
   app.use('/api/upload', uploadRoutes);
-  // Nested routes for business-specific resources
   app.use('/api/businesses/:businessId/services', serviceRoutes);
   app.use('/api/businesses/:businessId/specialists', specialistRoutes);
   app.use(errorHandler);
   return app;
 };
 
-// Setup before all tests
 beforeAll(async () => {
-  // Close any existing connections first
   if (mongoose.connection.readyState !== 0) {
     await mongoose.disconnect();
   }
 
-  // Disable index creation to avoid duplicate index warnings in tests
-  mongoose.set('autoIndex', false);
-
-  // Start in-memory MongoDB
   mongoServer = await MongoMemoryServer.create();
-  const mongoUri = mongoServer.getUri();
+  const uri = mongoServer.getUri();
 
-  // Connect to the in-memory database
-  await mongoose.connect(mongoUri);
+  await mongoose.connect(uri);
+
+  // Disable auto index creation AFTER connection
+  mongoose.set('autoIndex', false);
 });
 
-// Cleanup after each test
 afterEach(async () => {
-  // Clear all collections
   const collections = mongoose.connection.collections;
   for (const key in collections) {
     await collections[key].deleteMany({});
   }
 });
 
-// Cleanup after all tests
 afterAll(async () => {
-  // Disconnect and stop the in-memory database
   await mongoose.disconnect();
-  await mongoServer.stop();
+  if (mongoServer) {
+    await mongoServer.stop();
+  }
 });
 
-// Suppress console logs during tests
+// Only silence non-critical logs
 global.console = {
   ...console,
   log: jest.fn(),
-  debug: jest.fn(),
   info: jest.fn(),
-  warn: jest.fn(),
+  debug: jest.fn(),
 };
