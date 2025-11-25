@@ -35,8 +35,15 @@ export const getAllBusinesses = async (
   try {
     const page = parseInt(req.query.page as string) || 1;
     const limit = parseInt(req.query.limit as string) || 10;
+    const search = req.query.search as string;
+    const city = req.query.city as string;
 
-    const result = await businessService.getAllBusinesses(page, limit);
+    const filters = {
+      ...(search && { search }),
+      ...(city && { city }),
+    };
+
+    const result = await businessService.getAllBusinesses(page, limit, filters);
 
     res.status(200).json({
       status: 'success',
@@ -45,6 +52,33 @@ export const getAllBusinesses = async (
     });
   } catch (error) {
     next(error);
+  }
+};
+
+export const getBusinessByIdPublic = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const business = await businessService.getBusinessByIdPublic(req.params.id);
+
+    res.status(200).json({
+      status: 'success',
+      data: { business },
+    });
+  } catch (error) {
+    if (error instanceof Error) {
+      if (error.message.includes('Invalid business ID')) {
+        next(new AppError('Invalid business ID', 400));
+      } else if (error.message.includes('not found')) {
+        next(new AppError('Business not found', 404));
+      } else {
+        next(error);
+      }
+    } else {
+      next(error);
+    }
   }
 };
 

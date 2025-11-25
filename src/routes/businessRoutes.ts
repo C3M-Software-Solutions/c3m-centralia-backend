@@ -4,6 +4,7 @@ import {
   createBusiness,
   getAllBusinesses,
   getBusinessById,
+  getBusinessByIdPublic,
   updateBusiness,
   deleteBusiness,
 } from '../controllers/businessController.js';
@@ -120,8 +121,9 @@ router.post(
  * @swagger
  * /api/businesses:
  *   get:
- *     summary: Get all businesses
+ *     summary: Get all active businesses (Public)
  *     tags: [Businesses]
+ *     description: Public endpoint - no authentication required. Returns all active businesses with pagination and search filters.
  *     parameters:
  *       - in: query
  *         name: page
@@ -135,9 +137,70 @@ router.post(
  *           type: integer
  *           default: 10
  *         description: Number of items per page
+ *       - in: query
+ *         name: search
+ *         schema:
+ *           type: string
+ *         description: Search in business name and description
+ *         example: "dental clinic"
+ *       - in: query
+ *         name: city
+ *         schema:
+ *           type: string
+ *         description: Filter by city (searches in address field)
+ *         example: "Lima"
  *     responses:
  *       200:
- *         description: List of businesses
+ *         description: List of active businesses
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: success
+ *                 results:
+ *                   type: integer
+ *                   example: 5
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     businesses:
+ *                       type: array
+ *                       items:
+ *                         $ref: '#/components/schemas/Business'
+ *                     pagination:
+ *                       type: object
+ *                       properties:
+ *                         page:
+ *                           type: integer
+ *                         limit:
+ *                           type: integer
+ *                         total:
+ *                           type: integer
+ *                         pages:
+ *                           type: integer
+ */
+router.get('/', getAllBusinesses);
+
+/**
+ * @swagger
+ * /api/businesses/public/{id}:
+ *   get:
+ *     summary: Get business details with services and specialists (Public)
+ *     tags: [Businesses]
+ *     description: Public endpoint - no authentication required. Returns business details including all active services and specialists.
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Business ID
+ *     responses:
+ *       200:
+ *         description: Business details with services and specialists
  *         content:
  *           application/json:
  *             schema:
@@ -149,21 +212,40 @@ router.post(
  *                 data:
  *                   type: object
  *                   properties:
- *                     businesses:
- *                       type: array
- *                       items:
- *                         $ref: '#/components/schemas/Business'
- *                     pagination:
+ *                     business:
  *                       type: object
+ *                       properties:
+ *                         _id:
+ *                           type: string
+ *                         name:
+ *                           type: string
+ *                         description:
+ *                           type: string
+ *                         address:
+ *                           type: string
+ *                         phone:
+ *                           type: string
+ *                         services:
+ *                           type: array
+ *                           items:
+ *                             type: object
+ *                         specialists:
+ *                           type: array
+ *                           items:
+ *                             type: object
+ *       404:
+ *         description: Business not found
  */
-router.get('/', getAllBusinesses);
+router.get('/public/:id', getBusinessByIdPublic);
 
 /**
  * @swagger
  * /api/businesses/{id}:
  *   get:
- *     summary: Get business by ID
+ *     summary: Get business by ID (Authenticated)
  *     tags: [Businesses]
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -190,7 +272,7 @@ router.get('/', getAllBusinesses);
  *       404:
  *         description: Business not found
  */
-router.get('/:id', getBusinessById);
+router.get('/:id', authenticate, getBusinessById);
 
 /**
  * @swagger

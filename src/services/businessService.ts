@@ -74,14 +74,35 @@ export class BusinessService {
     return businesses;
   }
 
-  async getAllBusinesses(page = 1, limit = 10) {
+  async getAllBusinesses(page = 1, limit = 10, filters?: { search?: string; city?: string }) {
     const skip = (page - 1) * limit;
-    const businesses = await Business.find({ isActive: true })
+
+    interface QueryFilter {
+      isActive: boolean;
+      $or?: Array<{ [key: string]: RegExp }>;
+      address?: RegExp;
+    }
+
+    const query: QueryFilter = { isActive: true };
+
+    // Search filter (searches in name, description)
+    if (filters?.search) {
+      const searchRegex = new RegExp(filters.search, 'i');
+      query.$or = [{ name: searchRegex }, { description: searchRegex }];
+    }
+
+    // City filter (searches in address)
+    if (filters?.city) {
+      query.address = new RegExp(filters.city, 'i');
+    }
+
+    const businesses = await Business.find(query)
       .populate('user', 'name email')
       .skip(skip)
-      .limit(limit);
+      .limit(limit)
+      .sort({ createdAt: -1 });
 
-    const total = await Business.countDocuments({ isActive: true });
+    const total = await Business.countDocuments(query);
 
     return {
       businesses,
@@ -91,6 +112,37 @@ export class BusinessService {
         total,
         pages: Math.ceil(total / limit),
       },
+    };
+  }
+
+  async getBusinessByIdPublic(businessId: string) {
+    if (!Types.ObjectId.isValid(businessId)) {
+      throw new Error('Invalid business ID');
+    }
+
+    const business = await Business.findOne({ _id: businessId, isActive: true })
+      .populate('user', 'name')
+      .lean();
+
+    if (!business) {
+      throw new Error('Business not found');
+    }
+
+    // Get services and specialists for this business
+    const services = await Service.find({ business: businessId, isActive: true })
+      .select('name description duration price category')
+      .lean();
+
+    const specialists = await Specialist.find({ business: businessId, isActive: true })
+      .populate('user', 'name')
+      .populate('services', 'name duration price')
+      .select('specialty bio availability')
+      .lean();
+
+    return {
+      ...business,
+      services,
+      specialists,
     };
   }
 

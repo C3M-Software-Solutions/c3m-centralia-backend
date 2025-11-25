@@ -1,6 +1,8 @@
 import request from 'supertest';
 import express, { Express } from 'express';
 import { Business } from '../../../src/models/Business';
+import { Service } from '../../../src/models/Service';
+import { Specialist } from '../../../src/models/Specialist';
 import { User } from '../../../src/models/User';
 import businessRoutes from '../../../src/routes/businessRoutes';
 import { errorHandler } from '../../../src/middleware/errorHandler';
@@ -212,7 +214,10 @@ describe('Business Controller Tests', () => {
     });
 
     it('should get business by id', async () => {
-      const response = await request(app).get(`/api/businesses/${testBusiness._id}`).expect(200);
+      const response = await request(app)
+        .get(`/api/businesses/${testBusiness._id}`)
+        .set('Authorization', `Bearer ${adminToken}`)
+        .expect(200);
 
       expect(response.body.status).toBe('success');
       expect(response.body.data.business).toBeDefined();
@@ -220,7 +225,10 @@ describe('Business Controller Tests', () => {
     });
 
     it('should populate owner information', async () => {
-      const response = await request(app).get(`/api/businesses/${testBusiness._id}`).expect(200);
+      const response = await request(app)
+        .get(`/api/businesses/${testBusiness._id}`)
+        .set('Authorization', `Bearer ${adminToken}`)
+        .expect(200);
 
       expect(response.body.data.business.user).toBeDefined();
       expect(response.body.data.business.user.name).toBe(adminUser.name);
@@ -229,13 +237,19 @@ describe('Business Controller Tests', () => {
     it('should return 404 for non-existent business', async () => {
       const fakeId = '507f1f77bcf86cd799439011';
 
-      const response = await request(app).get(`/api/businesses/${fakeId}`).expect(404);
+      const response = await request(app)
+        .get(`/api/businesses/${fakeId}`)
+        .set('Authorization', `Bearer ${adminToken}`)
+        .expect(404);
 
       expect(response.body.status).toBe('error');
     });
 
     it('should return 400 for invalid business id', async () => {
-      const response = await request(app).get('/api/businesses/invalid-id').expect(400);
+      const response = await request(app)
+        .get('/api/businesses/invalid-id')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .expect(400);
 
       expect(response.body.status).toBe('error');
     });
@@ -416,6 +430,158 @@ describe('Business Controller Tests', () => {
         .expect(404);
 
       expect(response.body.status).toBe('error');
+    });
+  });
+
+  describe('GET /api/businesses - Public Endpoints', () => {
+    beforeEach(async () => {
+      // Create multiple businesses
+      await Business.create([
+        {
+          name: 'Dental Clinic Lima',
+          description: 'Professional dental services',
+          address: 'Av. Principal 123, Lima',
+          user: adminUser._id,
+          isActive: true,
+        },
+        {
+          name: 'Cardiology Center',
+          description: 'Heart health specialists',
+          address: 'Calle Salud 456, Miraflores, Lima',
+          user: regularUser._id,
+          isActive: true,
+        },
+        {
+          name: 'Inactive Business',
+          description: 'Should not appear',
+          user: adminUser._id,
+          isActive: false,
+        },
+      ]);
+    });
+
+    it('should get all active businesses without authentication', async () => {
+      const response = await request(app).get('/api/businesses').expect(200);
+
+      expect(response.body.status).toBe('success');
+      expect(response.body.results).toBe(2);
+      expect(response.body.data.businesses).toHaveLength(2);
+      expect(response.body.data.pagination).toBeDefined();
+    });
+
+    it('should filter businesses by search term', async () => {
+      const response = await request(app)
+        .get('/api/businesses')
+        .query({ search: 'dental' })
+        .expect(200);
+
+      expect(response.body.status).toBe('success');
+      expect(response.body.results).toBe(1);
+      expect(response.body.data.businesses[0].name).toContain('Dental');
+    });
+
+    it('should filter businesses by city', async () => {
+      const response = await request(app)
+        .get('/api/businesses')
+        .query({ city: 'Miraflores' })
+        .expect(200);
+
+      expect(response.body.status).toBe('success');
+      expect(response.body.results).toBe(1);
+      expect(response.body.data.businesses[0].address).toContain('Miraflores');
+    });
+
+    it('should combine search and city filters', async () => {
+      const response = await request(app)
+        .get('/api/businesses')
+        .query({ search: 'cardio', city: 'Lima' })
+        .expect(200);
+
+      expect(response.body.status).toBe('success');
+      expect(response.body.results).toBe(1);
+    });
+
+    it('should paginate results', async () => {
+      const response = await request(app)
+        .get('/api/businesses')
+        .query({ page: 1, limit: 1 })
+        .expect(200);
+
+      expect(response.body.status).toBe('success');
+      expect(response.body.results).toBe(1);
+      expect(response.body.data.pagination.pages).toBe(2);
+    });
+  });
+
+  describe('GET /api/businesses/public/:id - Public Detail', () => {
+    let business: any;
+    let service1: any;
+
+    beforeEach(async () => {
+      business = await Business.create({
+        name: 'Complete Clinic',
+        description: 'Full service clinic',
+        address: 'Test Address',
+        user: adminUser._id,
+        isActive: true,
+      });
+
+      service1 = await Service.create({
+        business: business._id,
+        name: 'Consultation',
+        duration: 60,
+        price: 100,
+        isActive: true,
+      });
+
+      await Service.create({
+        business: business._id,
+        name: 'Treatment',
+        duration: 90,
+        price: 200,
+        isActive: true,
+      });
+
+      const specialistUser = await User.create({
+        name: 'Dr. Smith',
+        email: 'specialist@test.com',
+        password: await hashPassword('password123'),
+        role: 'specialist',
+      });
+
+      await Specialist.create({
+        user: specialistUser._id,
+        business: business._id,
+        specialty: 'General Medicine',
+        services: [service1._id],
+        isActive: true,
+      });
+    });
+
+    it('should get business details with services and specialists without auth', async () => {
+      const response = await request(app).get(`/api/businesses/public/${business._id}`).expect(200);
+
+      expect(response.body.status).toBe('success');
+      expect(response.body.data.business).toBeDefined();
+      expect(response.body.data.business.name).toBe('Complete Clinic');
+      expect(response.body.data.business.services).toHaveLength(2);
+      expect(response.body.data.business.specialists).toHaveLength(1);
+    });
+
+    it('should return 404 for non-existent business', async () => {
+      const fakeId = '507f1f77bcf86cd799439011';
+
+      await request(app).get(`/api/businesses/public/${fakeId}`).expect(404);
+    });
+
+    it('should not return inactive business', async () => {
+      const inactiveBusiness = await Business.create({
+        name: 'Inactive',
+        user: adminUser._id,
+        isActive: false,
+      });
+
+      await request(app).get(`/api/businesses/public/${inactiveBusiness._id}`).expect(404);
     });
   });
 });
