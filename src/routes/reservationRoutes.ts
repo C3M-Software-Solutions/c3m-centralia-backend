@@ -6,6 +6,7 @@ import {
   getReservationById,
   updateReservationStatus,
   checkAvailability,
+  getMyReservationsAsSpecialist,
 } from '../controllers/reservationController.js';
 import { getClinicalRecordByReservation } from '../controllers/clinicalRecordController.js';
 import { authenticate } from '../middleware/auth.js';
@@ -83,6 +84,10 @@ router.post('/', authenticate, validate(reservationValidation), createReservatio
  * /api/reservations:
  *   post:
  *     summary: Create a new reservation
+ *     description: |
+ *       Creates a new reservation for a client with a specialist.
+ *       **Important**: The `endDate` is automatically calculated based on the service duration.
+ *       You only need to provide the `startDate` and the system will calculate `endDate = startDate + service.duration`.
  *     tags: [Reservations]
  *     security:
  *       - bearerAuth: []
@@ -106,17 +111,19 @@ router.post('/', authenticate, validate(reservationValidation), createReservatio
  *                 description: Specialist ID
  *               service:
  *                 type: string
- *                 description: Service ID
+ *                 description: Service ID (used to calculate endDate automatically)
  *               startDate:
  *                 type: string
  *                 format: date-time
+ *                 description: Start date and time of the reservation
  *                 example: 2024-12-25T09:00:00.000Z
  *               notes:
  *                 type: string
+ *                 description: Optional notes for the reservation
  *                 example: First time appointment
  *     responses:
  *       201:
- *         description: Reservation created successfully
+ *         description: Reservation created successfully. The response includes the auto-calculated endDate.
  *         content:
  *           application/json:
  *             schema:
@@ -131,7 +138,11 @@ router.post('/', authenticate, validate(reservationValidation), createReservatio
  *                     reservation:
  *                       $ref: '#/components/schemas/Reservation'
  *       409:
- *         description: Time slot not available
+ *         description: Time slot not available (conflicts with existing reservation)
+ *       404:
+ *         description: Service, specialist, or business not found
+ *       400:
+ *         description: Invalid data or specialist cannot provide this service
  */
 router.get('/', authenticate, getReservations);
 
@@ -321,5 +332,72 @@ router.get('/:id/clinical-record', authenticate, getClinicalRecordByReservation)
  *         description: Reservation not found
  */
 router.put('/:id/status', authenticate, validate(updateStatusValidation), updateReservationStatus);
+
+/**
+ * @swagger
+ * /api/reservations/specialist/my-reservations:
+ *   get:
+ *     summary: Get reservations for authenticated specialist
+ *     description: Returns all reservations assigned to the authenticated specialist. Requires specialist role.
+ *     tags: [Reservations]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: status
+ *         schema:
+ *           type: string
+ *           enum: [pending, confirmed, cancelled, completed, no-show]
+ *         description: Filter by reservation status
+ *       - in: query
+ *         name: date
+ *         schema:
+ *           type: string
+ *           format: date
+ *           example: "2025-11-24"
+ *         description: Filter by specific date (YYYY-MM-DD)
+ *       - in: query
+ *         name: dateFrom
+ *         schema:
+ *           type: string
+ *           format: date
+ *           example: "2025-11-24"
+ *         description: Filter from this date (YYYY-MM-DD)
+ *       - in: query
+ *         name: dateTo
+ *         schema:
+ *           type: string
+ *           format: date
+ *           example: "2025-11-30"
+ *         description: Filter until this date (YYYY-MM-DD)
+ *     responses:
+ *       200:
+ *         description: Specialist's reservations retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: success
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     reservations:
+ *                       type: array
+ *                       items:
+ *                         $ref: '#/components/schemas/Reservation'
+ *                     total:
+ *                       type: integer
+ *                       example: 12
+ *       401:
+ *         description: Unauthorized - Authentication required
+ *       404:
+ *         description: User is not registered as a specialist
+ *       500:
+ *         description: Server error
+ */
+router.get('/specialist/my-reservations', authenticate, getMyReservationsAsSpecialist);
 
 export default router;

@@ -498,4 +498,221 @@ describe('Reservation Integration Tests', () => {
       expect(response.body.results).toBe(3);
     });
   });
+
+  describe('GET /api/reservations/specialist/my-reservations', () => {
+    let specialistToken: string;
+    let anotherSpecialist: typeof specialist;
+    let anotherSpecialistUser: typeof specialistUser;
+
+    beforeEach(async () => {
+      specialistToken = generateAccessToken({
+        userId: specialistUser._id,
+        email: specialistUser.email,
+        role: specialistUser.role,
+      });
+
+      // Create reservations for the specialist
+      await Reservation.create({
+        user: clientUser._id,
+        business: business._id,
+        specialist: specialist._id,
+        service: service._id,
+        startDate: new Date('2025-11-24T09:00:00Z'),
+        endDate: new Date('2025-11-24T10:00:00Z'),
+        status: 'confirmed',
+      });
+
+      await Reservation.create({
+        user: clientUser._id,
+        business: business._id,
+        specialist: specialist._id,
+        service: service._id,
+        startDate: new Date('2025-11-25T14:00:00Z'),
+        endDate: new Date('2025-11-25T15:00:00Z'),
+        status: 'pending',
+      });
+
+      await Reservation.create({
+        user: clientUser._id,
+        business: business._id,
+        specialist: specialist._id,
+        service: service._id,
+        startDate: new Date('2025-11-26T11:00:00Z'),
+        endDate: new Date('2025-11-26T12:00:00Z'),
+        status: 'cancelled',
+      });
+
+      // Create another specialist with reservations
+      anotherSpecialistUser = await User.create({
+        name: 'Another Specialist',
+        email: 'specialist2@test.com',
+        password: await hashPassword('password123'),
+        role: 'specialist',
+      });
+
+      anotherSpecialist = await Specialist.create({
+        user: anotherSpecialistUser._id,
+        business: business._id,
+        specialty: 'Cardiology',
+        isActive: true,
+      });
+
+      await Reservation.create({
+        user: clientUser._id,
+        business: business._id,
+        specialist: anotherSpecialist._id,
+        service: service._id,
+        startDate: new Date('2025-11-24T10:00:00Z'),
+        endDate: new Date('2025-11-24T11:00:00Z'),
+        status: 'confirmed',
+      });
+    });
+
+    it('should return all reservations for authenticated specialist', async () => {
+      const response = await request(app)
+        .get('/api/reservations/specialist/my-reservations')
+        .set('Authorization', `Bearer ${specialistToken}`)
+        .expect(200);
+
+      expect(response.body.status).toBe('success');
+      expect(response.body.data.total).toBe(3);
+      expect(response.body.data.reservations).toHaveLength(3);
+
+      // Verify all reservations belong to the specialist
+      response.body.data.reservations.forEach(
+        (reservation: { specialist: { _id?: string } | string }) => {
+          const specialistId =
+            typeof reservation.specialist === 'string'
+              ? reservation.specialist
+              : reservation.specialist._id;
+          expect(specialistId).toBe(specialist._id.toString());
+        }
+      );
+    });
+
+    it('should filter reservations by status', async () => {
+      const response = await request(app)
+        .get('/api/reservations/specialist/my-reservations')
+        .set('Authorization', `Bearer ${specialistToken}`)
+        .query({ status: 'confirmed' })
+        .expect(200);
+
+      expect(response.body.status).toBe('success');
+      expect(response.body.data.total).toBe(1);
+      expect(response.body.data.reservations[0].status).toBe('confirmed');
+    });
+
+    it('should filter reservations by specific date', async () => {
+      const response = await request(app)
+        .get('/api/reservations/specialist/my-reservations')
+        .set('Authorization', `Bearer ${specialistToken}`)
+        .query({ date: '2025-11-24' })
+        .expect(200);
+
+      expect(response.body.status).toBe('success');
+      expect(response.body.data.total).toBe(1);
+
+      const reservationDate = new Date(response.body.data.reservations[0].startDate);
+      expect(reservationDate.getUTCDate()).toBe(24);
+    });
+
+    it('should filter reservations by date range', async () => {
+      const response = await request(app)
+        .get('/api/reservations/specialist/my-reservations')
+        .set('Authorization', `Bearer ${specialistToken}`)
+        .query({ dateFrom: '2025-11-24', dateTo: '2025-11-25' })
+        .expect(200);
+
+      expect(response.body.status).toBe('success');
+      expect(response.body.data.total).toBe(2);
+    });
+
+    it('should combine status and date filters', async () => {
+      const response = await request(app)
+        .get('/api/reservations/specialist/my-reservations')
+        .set('Authorization', `Bearer ${specialistToken}`)
+        .query({ status: 'pending', dateFrom: '2025-11-25' })
+        .expect(200);
+
+      expect(response.body.status).toBe('success');
+      expect(response.body.data.total).toBe(1);
+      expect(response.body.data.reservations[0].status).toBe('pending');
+    });
+
+    it('should fail without authentication', async () => {
+      await request(app).get('/api/reservations/specialist/my-reservations').expect(401);
+    });
+
+    it('should fail if user is not a specialist', async () => {
+      const response = await request(app)
+        .get('/api/reservations/specialist/my-reservations')
+        .set('Authorization', `Bearer ${clientToken}`)
+        .expect(404);
+
+      expect(response.body.message).toContain('not registered as a specialist');
+    });
+
+    it('should include complete reservation details', async () => {
+      const response = await request(app)
+        .get('/api/reservations/specialist/my-reservations')
+        .set('Authorization', `Bearer ${specialistToken}`)
+        .expect(200);
+
+      const reservation = response.body.data.reservations[0];
+
+      // Verify populated fields
+      expect(reservation.user).toBeDefined();
+      expect(reservation.user.name).toBeDefined();
+      expect(reservation.user.email).toBeDefined();
+
+      expect(reservation.business).toBeDefined();
+      expect(reservation.business.name).toBeDefined();
+
+      expect(reservation.service).toBeDefined();
+      expect(reservation.service.name).toBeDefined();
+      expect(reservation.service.duration).toBeDefined();
+
+      expect(reservation.startDate).toBeDefined();
+      expect(reservation.endDate).toBeDefined();
+      expect(reservation.status).toBeDefined();
+    });
+
+    it('should not show other specialist reservations', async () => {
+      const response = await request(app)
+        .get('/api/reservations/specialist/my-reservations')
+        .set('Authorization', `Bearer ${specialistToken}`)
+        .expect(200);
+
+      // Should only show 3 reservations (not the one from anotherSpecialist)
+      expect(response.body.data.total).toBe(3);
+
+      const hasOtherSpecialistReservation = response.body.data.reservations.some(
+        (reservation: { specialist: { _id?: string } | string }) => {
+          const specialistId =
+            typeof reservation.specialist === 'string'
+              ? reservation.specialist
+              : reservation.specialist._id;
+          return specialistId === anotherSpecialist._id.toString();
+        }
+      );
+      expect(hasOtherSpecialistReservation).toBe(false);
+    });
+
+    it('should return reservations sorted by startDate ascending', async () => {
+      const response = await request(app)
+        .get('/api/reservations/specialist/my-reservations')
+        .set('Authorization', `Bearer ${specialistToken}`)
+        .expect(200);
+
+      const reservations = response.body.data.reservations;
+      expect(reservations).toHaveLength(3);
+
+      // Verify ascending order
+      for (let i = 0; i < reservations.length - 1; i++) {
+        const currentDate = new Date(reservations[i].startDate);
+        const nextDate = new Date(reservations[i + 1].startDate);
+        expect(currentDate.getTime()).toBeLessThanOrEqual(nextDate.getTime());
+      }
+    });
+  });
 });

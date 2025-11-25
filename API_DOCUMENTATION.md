@@ -295,15 +295,38 @@ POST /api/reservations
 
 _Requires authentication_
 
+**Important**: The `endDate` is automatically calculated based on the service duration. You only need to provide the `startDate`.
+
 **Request Body:**
 
 ```json
 {
-  "businessId": "...",
-  "specialistId": "...",
-  "serviceId": "...",
-  "startTime": "2024-01-15T09:00:00.000Z",
+  "business": "...",
+  "specialist": "...",
+  "service": "...",
+  "startDate": "2024-01-15T09:00:00.000Z",
   "notes": "First time appointment"
+}
+```
+
+**Response:**
+
+```json
+{
+  "status": "success",
+  "data": {
+    "reservation": {
+      "_id": "...",
+      "user": {...},
+      "business": {...},
+      "specialist": {...},
+      "service": {...},
+      "startDate": "2024-01-15T09:00:00.000Z",
+      "endDate": "2024-01-15T10:00:00.000Z",
+      "status": "pending",
+      "notes": "First time appointment"
+    }
+  }
 }
 ```
 
@@ -317,12 +340,84 @@ _Requires authentication_
 
 **Query Parameters:**
 
-- `userId` (optional): Filter by user
-- `businessId` (optional): Filter by business
-- `specialistId` (optional): Filter by specialist
-- `status` (optional): Filter by status (pending, confirmed, cancelled, completed)
-- `startDate` (optional): Filter from date
-- `endDate` (optional): Filter to date
+- `status` (optional): Filter by status (pending, confirmed, cancelled, completed, no-show)
+- `specialist` (optional): Filter by specialist ID
+- `date` (optional): Filter by specific date (YYYY-MM-DD)
+- `dateFrom` (optional): Filter from date (YYYY-MM-DD)
+- `dateTo` (optional): Filter to date (YYYY-MM-DD)
+- `startDate` (optional): **Deprecated** - Use `dateFrom` instead
+- `endDate` (optional): **Deprecated** - Use `dateTo` instead
+
+**Behavior by role:**
+
+- **Clients**: See only their own reservations
+- **Specialists**: See only reservations assigned to them
+- **Admins**: See all reservations
+
+**Response:**
+
+```json
+{
+  "status": "success",
+  "data": {
+    "reservations": [...],
+    "results": 5
+  }
+}
+```
+
+### Get Specialist's Reservations
+
+```http
+GET /api/reservations/specialist/my-reservations
+```
+
+_Requires authentication (specialist role)_
+
+Returns all reservations assigned to the authenticated specialist with complete details.
+
+**Query Parameters:**
+
+- `status` (optional): Filter by status (pending, confirmed, cancelled, completed, no-show)
+- `date` (optional): Filter by specific date (YYYY-MM-DD)
+- `dateFrom` (optional): Filter from date (YYYY-MM-DD)
+- `dateTo` (optional): Filter to date (YYYY-MM-DD)
+
+**Response:**
+
+```json
+{
+  "status": "success",
+  "data": {
+    "reservations": [
+      {
+        "_id": "...",
+        "user": {
+          "name": "John Doe",
+          "email": "john@example.com",
+          "phone": "+1234567890"
+        },
+        "business": {
+          "name": "Medical Center",
+          "address": "123 Main St",
+          "phone": "+9876543210"
+        },
+        "service": {
+          "name": "Consultation",
+          "duration": 60,
+          "price": 100,
+          "description": "General consultation"
+        },
+        "startDate": "2024-01-15T09:00:00.000Z",
+        "endDate": "2024-01-15T10:00:00.000Z",
+        "status": "confirmed",
+        "notes": "First time appointment"
+      }
+    ],
+    "total": 12
+  }
+}
+```
 
 ### Get Single Reservation
 
@@ -332,10 +427,20 @@ GET /api/reservations/:id
 
 _Requires authentication_
 
-### Update Reservation
+### Get Clinical Record by Reservation
 
 ```http
-PUT /api/reservations/:id
+GET /api/reservations/:id/clinical-record
+```
+
+_Requires authentication_
+
+Returns the clinical record associated with a reservation.
+
+### Update Reservation Status
+
+```http
+PUT /api/reservations/:id/status
 ```
 
 _Requires authentication and authorization_
@@ -345,7 +450,7 @@ _Requires authentication and authorization_
 ```json
 {
   "status": "confirmed",
-  "notes": "Updated notes"
+  "cancellationReason": "Optional reason if cancelling"
 }
 ```
 

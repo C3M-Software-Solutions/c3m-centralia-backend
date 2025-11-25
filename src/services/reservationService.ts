@@ -239,6 +239,45 @@ export class ReservationService {
       })),
     };
   }
+
+  async getSpecialistReservations(userId: string, filter: ReservationFilterData) {
+    // Find specialist by user ID
+    const specialist = await Specialist.findOne({ user: userId, isActive: true });
+    if (!specialist) {
+      throw new Error('Specialist not found');
+    }
+
+    interface QueryFilter {
+      specialist: string;
+      status?: string;
+      startDate?: {
+        $gte?: Date;
+        $lte?: Date;
+      };
+    }
+
+    const query: QueryFilter = {
+      specialist: specialist._id.toString(),
+    };
+
+    if (filter.status) {
+      query.status = filter.status;
+    }
+
+    if (filter.startDate || filter.endDate) {
+      query.startDate = {};
+      if (filter.startDate) query.startDate.$gte = filter.startDate;
+      if (filter.endDate) query.startDate.$lte = filter.endDate;
+    }
+
+    const reservations = await Reservation.find(query)
+      .populate('user', 'name email phone')
+      .populate('business', 'name address phone')
+      .populate('service', 'name duration price description')
+      .sort({ startDate: 1 });
+
+    return reservations;
+  }
 }
 
 export const reservationService = new ReservationService();

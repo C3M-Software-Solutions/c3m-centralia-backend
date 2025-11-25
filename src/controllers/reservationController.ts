@@ -259,3 +259,88 @@ export const checkAvailability = async (
     }
   }
 };
+
+export const getMyReservationsAsSpecialist = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const userId = req.user?.userId;
+    const { status, date, dateFrom, dateTo } = req.query;
+
+    if (!userId) {
+      throw new AppError('Unauthorized', 401);
+    }
+
+    const filter: Record<string, unknown> = {};
+
+    if (status) {
+      filter.status = status as string;
+    }
+
+    // Handle date filtering
+    if (date) {
+      const specificDate = new Date(date as string);
+      const startOfDay = new Date(
+        Date.UTC(
+          specificDate.getUTCFullYear(),
+          specificDate.getUTCMonth(),
+          specificDate.getUTCDate(),
+          0,
+          0,
+          0,
+          0
+        )
+      );
+      const endOfDay = new Date(
+        Date.UTC(
+          specificDate.getUTCFullYear(),
+          specificDate.getUTCMonth(),
+          specificDate.getUTCDate(),
+          23,
+          59,
+          59,
+          999
+        )
+      );
+
+      filter.startDate = startOfDay;
+      filter.endDate = endOfDay;
+    } else if (dateFrom || dateTo) {
+      if (dateFrom) {
+        const fromDate = new Date(dateFrom as string);
+        fromDate.setUTCHours(0, 0, 0, 0);
+        filter.startDate = fromDate;
+      }
+      if (dateTo) {
+        const toDate = new Date(dateTo as string);
+        toDate.setUTCHours(23, 59, 59, 999);
+        filter.endDate = toDate;
+      }
+    }
+
+    const reservations = await reservationService.getSpecialistReservations(
+      userId.toString(),
+      filter
+    );
+
+    res.status(200).json({
+      status: 'success',
+      data: {
+        reservations,
+        total: reservations.length,
+      },
+    });
+  } catch (error) {
+    if (error instanceof Error) {
+      if (error.message.includes('Specialist not found')) {
+        next(new AppError('You are not registered as a specialist', 404));
+      } else {
+        next(error);
+      }
+    } else {
+      next(error);
+    }
+  }
+};
