@@ -58,9 +58,13 @@ export const getSpecialistsByBusiness = async (req: Request, res: Response) => {
 
 export const getSpecialistById = async (req: Request, res: Response) => {
   try {
-    const { businessId, specialistId } = req.params;
-    const specialists = await businessService.getSpecialistsByBusiness(businessId);
-    const specialist = specialists.find((s) => s._id.toString() === specialistId);
+    const { specialistId } = req.params;
+    const { Specialist } = await import('../models/Specialist.js');
+
+    const specialist = await Specialist.findById(specialistId)
+      .populate('user', 'name email phone avatar')
+      .populate('services', 'name description duration price category')
+      .populate('business', 'name address phone email');
 
     if (!specialist) {
       return res.status(404).json({

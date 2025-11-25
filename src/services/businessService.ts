@@ -278,10 +278,9 @@ export class BusinessService {
   }
 
   async getSpecialistsByBusiness(businessId: string) {
-    const specialists = await Specialist.find({ business: businessId, isActive: true }).populate(
-      'user',
-      'name email phone avatar'
-    );
+    const specialists = await Specialist.find({ business: businessId, isActive: true })
+      .populate('user', 'name email phone avatar')
+      .populate('services', 'name description duration price category');
     return specialists;
   }
 

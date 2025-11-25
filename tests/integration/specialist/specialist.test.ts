@@ -323,6 +323,51 @@ describe('Specialist Controller Tests', () => {
 
       expect(response.body.data.specialists[0].user).toBeDefined();
       expect(response.body.data.specialists[0].user.name).toBeDefined();
+      expect(response.body.data.specialists[0].user.email).toBeDefined();
+    });
+
+    it('should populate services information when available', async () => {
+      // Create a service
+      const Service = (await import('../../../src/models/Service.js')).Service;
+      const service = await Service.create({
+        business: testBusiness._id,
+        name: 'Test Service',
+        duration: 30,
+        price: 50,
+        isActive: true,
+      });
+
+      // Create specialist with service
+      const specialistWithService = await Specialist.create({
+        business: testBusiness._id,
+        user: specialistUser._id,
+        specialty: 'Test Specialty',
+        services: [service._id],
+        isActive: true,
+      });
+
+      const response = await request(app)
+        .get(`/api/businesses/${testBusiness._id}/specialists`)
+        .expect(200);
+
+      const specialistData = response.body.data.specialists.find(
+        (s: any) => s._id.toString() === specialistWithService._id.toString()
+      );
+
+      expect(specialistData.services).toBeDefined();
+      expect(specialistData.services).toHaveLength(1);
+      expect(specialistData.services[0].name).toBe('Test Service');
+      expect(specialistData.services[0].duration).toBe(30);
+      expect(specialistData.services[0].price).toBe(50);
+    });
+
+    it('should include availability array', async () => {
+      const response = await request(app)
+        .get(`/api/businesses/${testBusiness._id}/specialists`)
+        .expect(200);
+
+      expect(response.body.data.specialists[0].availability).toBeDefined();
+      expect(Array.isArray(response.body.data.specialists[0].availability)).toBe(true);
     });
   });
 
@@ -346,6 +391,49 @@ describe('Specialist Controller Tests', () => {
       expect(response.body.status).toBe('success');
       expect(response.body.data.specialist).toBeDefined();
       expect(response.body.data.specialist.specialty).toBe('Physical Therapy');
+    });
+
+    it('should populate user, business, and services in specialist details', async () => {
+      // Create a service
+      const Service = (await import('../../../src/models/Service.js')).Service;
+      const service = await Service.create({
+        business: testBusiness._id,
+        name: 'Consultation',
+        duration: 45,
+        price: 75,
+        description: 'General consultation',
+        isActive: true,
+      });
+
+      // Update specialist with service
+      testSpecialist.services = [service._id];
+      await testSpecialist.save();
+
+      const response = await request(app)
+        .get(`/api/businesses/${testBusiness._id}/specialists/${testSpecialist._id}`)
+        .expect(200);
+
+      const specialist = response.body.data.specialist;
+
+      // Verify user is populated
+      expect(specialist.user).toBeDefined();
+      expect(specialist.user.name).toBeDefined();
+      expect(specialist.user.email).toBeDefined();
+
+      // Verify business is populated
+      expect(specialist.business).toBeDefined();
+      expect(specialist.business.name).toBeDefined();
+
+      // Verify services are populated
+      expect(specialist.services).toBeDefined();
+      expect(specialist.services).toHaveLength(1);
+      expect(specialist.services[0].name).toBe('Consultation');
+      expect(specialist.services[0].duration).toBe(45);
+      expect(specialist.services[0].price).toBe(75);
+
+      // Verify availability is included
+      expect(specialist.availability).toBeDefined();
+      expect(Array.isArray(specialist.availability)).toBe(true);
     });
 
     it('should return 404 for non-existent specialist', async () => {

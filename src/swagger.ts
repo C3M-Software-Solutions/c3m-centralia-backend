@@ -188,23 +188,55 @@ const options: swaggerJsdoc.Options = {
               type: 'string',
             },
             user: {
-              type: 'string',
-              description: 'User ID',
+              oneOf: [
+                { type: 'string', description: 'User ID (when not populated)' },
+                {
+                  type: 'object',
+                  description: 'User details (when populated)',
+                  properties: {
+                    _id: { type: 'string' },
+                    name: { type: 'string', example: 'Dr. Juan Pérez' },
+                    email: { type: 'string', example: 'doctor@example.com' },
+                    phone: { type: 'string', example: '+1234567890' },
+                    avatar: { type: 'string', example: 'https://example.com/avatar.jpg' },
+                  },
+                },
+              ],
             },
             business: {
-              type: 'string',
-              description: 'Business ID',
+              oneOf: [
+                { type: 'string', description: 'Business ID (when not populated)' },
+                {
+                  type: 'object',
+                  description: 'Business details (when populated)',
+                  properties: {
+                    _id: { type: 'string' },
+                    name: { type: 'string', example: 'Clínica Central' },
+                    address: { type: 'string', example: 'Av. Principal 123' },
+                    phone: { type: 'string', example: '+987654321' },
+                    email: { type: 'string', example: 'clinica@example.com' },
+                  },
+                },
+              ],
             },
             specialty: {
               type: 'string',
               example: 'Physical Therapy',
+            },
+            licenseNumber: {
+              type: 'string',
+              example: 'LIC-12345',
+            },
+            bio: {
+              type: 'string',
+              example: 'Specialist with 10+ years of experience',
             },
             availability: {
               type: 'array',
               items: {
                 type: 'object',
                 properties: {
-                  dayOfWeek: {
+                  day: {
                     type: 'string',
                     enum: [
                       'monday',
@@ -227,12 +259,36 @@ const options: swaggerJsdoc.Options = {
                     pattern: '^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$',
                     example: '17:00',
                   },
-                  available: {
+                  isAvailable: {
                     type: 'boolean',
                     example: true,
                   },
                 },
               },
+            },
+            services: {
+              type: 'array',
+              items: {
+                oneOf: [
+                  { type: 'string', description: 'Service ID (when not populated)' },
+                  {
+                    type: 'object',
+                    description: 'Service details (when populated)',
+                    properties: {
+                      _id: { type: 'string' },
+                      name: { type: 'string', example: 'General Consultation' },
+                      description: { type: 'string', example: 'Standard medical consultation' },
+                      duration: { type: 'number', example: 30 },
+                      price: { type: 'number', example: 50 },
+                      category: { type: 'string', example: 'Consultation' },
+                    },
+                  },
+                ],
+              },
+            },
+            isActive: {
+              type: 'boolean',
+              example: true,
             },
             createdAt: {
               type: 'string',

@@ -108,6 +108,7 @@ router.post('/', authenticate, validate(specialistValidation), createSpecialist)
  * /api/businesses/{businessId}/specialists:
  *   get:
  *     summary: Get all specialists for a business
+ *     description: Returns all active specialists with populated user and services data
  *     tags: [Specialists]
  *     parameters:
  *       - in: path
@@ -118,7 +119,7 @@ router.post('/', authenticate, validate(specialistValidation), createSpecialist)
  *         description: Business ID
  *     responses:
  *       200:
- *         description: List of specialists
+ *         description: List of specialists with populated user and services data
  *         content:
  *           application/json:
  *             schema:
@@ -142,6 +143,7 @@ router.get('/', getSpecialistsByBusiness);
  * /api/businesses/{businessId}/specialists/{specialistId}:
  *   get:
  *     summary: Get specialist by ID
+ *     description: Returns specialist details with populated user, services, and business data including availability schedule
  *     tags: [Specialists]
  *     parameters:
  *       - in: path
@@ -158,7 +160,20 @@ router.get('/', getSpecialistsByBusiness);
  *         description: Specialist ID
  *     responses:
  *       200:
- *         description: Specialist details
+ *         description: Specialist details with all related data (user, services, business, availability)
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: success
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     specialist:
+ *                       $ref: '#/components/schemas/Specialist'
  *       404:
  *         description: Specialist not found
  */
