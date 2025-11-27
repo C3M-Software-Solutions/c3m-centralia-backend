@@ -1,8 +1,9 @@
-import { Reservation } from '../models/Reservation';
-import { Service } from '../models/Service';
-import { Specialist } from '../models/Specialist';
 import { Types } from 'mongoose';
-import { notificationService } from './notificationService';
+
+import { Reservation } from '../models/Reservation.js';
+import { Service } from '../models/Service.js';
+import { Specialist } from '../models/Specialist.js';
+import { notificationService } from './notificationService.js';
 
 export interface CreateReservationData {
   userId: string;

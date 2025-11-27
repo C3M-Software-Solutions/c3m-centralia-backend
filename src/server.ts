@@ -5,11 +5,12 @@ import morgan from 'morgan';
 import dotenv from 'dotenv';
 import path from 'path';
 import swaggerUi from 'swagger-ui-express';
-import { connectDatabase } from './config/database';
+
+import { connectDatabase } from './config/database.js';
 // import { config } from './config/index';
-import { errorHandler, notFound } from './middleware/errorHandler';
-import { swaggerSpec } from './swagger';
-import { reminderService } from './services/reminderService';
+import { errorHandler, notFound } from './middleware/errorHandler.js';
+import { swaggerSpec } from './swagger.js';
+import { reminderService } from './services/reminderService.js';
 
 // Load environment variables
 dotenv.config();
@@ -141,7 +142,7 @@ import {
   serviceRoutes,
   specialistRoutes,
   cronRoutes,
-} from './routes';
+} from './routes/index.js';
 
 app.use('/api/auth', authRoutes);
 app.use('/api/businesses', businessRoutes);

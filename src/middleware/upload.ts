@@ -1,7 +1,8 @@
 import multer from 'multer';
 import { Request, Response, NextFunction } from 'express';
-import { config } from '../config';
-import { storageService } from '../utils/storage';
+
+import { config } from '../config/index.js';
+import { storageService } from '../utils/storage.js';
 
 // Configure multer to use memory storage
 const storage = multer.memoryStorage();

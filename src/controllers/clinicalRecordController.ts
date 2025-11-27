@@ -1,7 +1,8 @@
 import { Request, Response, NextFunction } from 'express';
-import { ClinicalRecordService } from '../services/clinicalRecordService';
-import { Specialist } from '../models/Specialist';
-import { AppError } from '../middleware/errorHandler';
+
+import { ClinicalRecordService } from '../services/clinicalRecordService.js';
+import { Specialist } from '../models/Specialist.js';
+import { AppError } from '../middleware/errorHandler.js';
 
 const clinicalRecordService = new ClinicalRecordService();
 

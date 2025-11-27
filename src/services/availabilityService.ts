@@ -1,7 +1,8 @@
-import { Specialist } from '../models/Specialist';
-import { Service } from '../models/Service';
-import { Reservation } from '../models/Reservation';
 import { Types } from 'mongoose';
+
+import { Specialist } from '../models/Specialist.js';
+import { Service } from '../models/Service.js';
+import { Reservation } from '../models/Reservation.js';
 
 export interface AvailableSlot {
   startTime: Date;

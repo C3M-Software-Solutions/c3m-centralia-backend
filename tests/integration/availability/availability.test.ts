@@ -1,11 +1,12 @@
 import request from 'supertest';
 import mongoose from 'mongoose';
-import app from '../../../src/server';
-import { User } from '../../../src/models/User';
-import { Business } from '../../../src/models/Business';
-import { Specialist } from '../../../src/models/Specialist';
-import { Service } from '../../../src/models/Service';
-import { Reservation } from '../../../src/models/Reservation';
+
+import app from '../../../src/server.js';
+import { User } from '../../../src/models/User.js';
+import { Business } from '../../../src/models/Business.js';
+import { Specialist } from '../../../src/models/Specialist.js';
+import { Service } from '../../../src/models/Service.js';
+import { Reservation } from '../../../src/models/Reservation.js';
 
 describe('Availability API', () => {
   let businessOwnerId: string;

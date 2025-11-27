@@ -1,10 +1,10 @@
-import { notificationService } from '../../../src/services/notificationService';
-import { User } from '../../../src/models/User';
-import { Business } from '../../../src/models/Business';
-import { Specialist } from '../../../src/models/Specialist';
-import { Service } from '../../../src/models/Service';
-import { Reservation } from '../../../src/models/Reservation';
-import { hashPassword } from '../../../src/utils/password';
+import { notificationService } from '../../../src/services/notificationService.js';
+import { User } from '../../../src/models/User.js';
+import { Business } from '../../../src/models/Business.js';
+import { Specialist } from '../../../src/models/Specialist.js';
+import { Service } from '../../../src/models/Service.js';
+import { Reservation } from '../../../src/models/Reservation.js';
+import { hashPassword } from '../../../src/utils/password.js';
 
 describe('Notification Service Tests', () => {
   let testUser: any;

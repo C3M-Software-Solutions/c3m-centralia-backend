@@ -1,9 +1,10 @@
 import request from 'supertest';
 import express, { Express } from 'express';
-import { User } from '../../../src/models/User';
-import authRoutes from '../../../src/routes/authRoutes';
-import { errorHandler } from '../../../src/middleware/errorHandler';
-import { hashPassword } from '../../../src/utils/password';
+
+import { User } from '../../../src/models/User.js';
+import authRoutes from '../../../src/routes/authRoutes.js';
+import { errorHandler } from '../../../src/middleware/errorHandler.js';
+import { hashPassword } from '../../../src/utils/password.js';
 
 // Create test app
 const createTestApp = (): Express => {

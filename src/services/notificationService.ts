@@ -1,6 +1,7 @@
 import nodemailer from 'nodemailer';
-import { IReservation } from '../models/Reservation';
-import { config } from '../config/index';
+
+import { IReservation } from '../models/Reservation.js';
+import { config } from '../config/index.js';
 
 interface EmailData {
   to: string;

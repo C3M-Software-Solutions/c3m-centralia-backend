@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
-import { businessService } from '../services/businessService';
-import { AppError } from '../middleware/errorHandler';
+
+import { businessService } from '../services/businessService.js';
+import { AppError } from '../middleware/errorHandler.js';
 
 export const createBusiness = async (
   req: Request,

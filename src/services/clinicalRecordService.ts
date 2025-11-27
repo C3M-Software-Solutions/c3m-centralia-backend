@@ -1,8 +1,8 @@
-import { ClinicalRecord } from '../models/ClinicalRecord';
-import { Attachment } from '../models/Attachment';
-import { Specialist } from '../models/Specialist';
-import { Business } from '../models/Business';
-import { Reservation } from '../models/Reservation';
+import { ClinicalRecord } from '../models/ClinicalRecord.js';
+import { Attachment } from '../models/Attachment.js';
+import { Specialist } from '../models/Specialist.js';
+import { Business } from '../models/Business.js';
+import { Reservation } from '../models/Reservation.js';
 
 export interface CreateClinicalRecordData {
   patientId: string;

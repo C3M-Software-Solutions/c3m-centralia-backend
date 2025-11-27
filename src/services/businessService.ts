@@ -1,7 +1,8 @@
-import { Business } from '../models/Business';
-import { Service } from '../models/Service';
-import { Specialist } from '../models/Specialist';
 import { Types } from 'mongoose';
+
+import { Business } from '../models/Business.js';
+import { Service } from '../models/Service.js';
+import { Specialist } from '../models/Specialist.js';
 
 export interface CreateBusinessData {
   name: string;

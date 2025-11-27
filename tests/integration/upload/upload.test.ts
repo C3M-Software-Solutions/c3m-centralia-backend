@@ -1,11 +1,12 @@
 import request from 'supertest';
 import express, { Express } from 'express';
-import { User } from '../../../src/models/User';
-import { generateAccessToken } from '../../../src/utils/jwt';
-import uploadRoutes from '../../../src/routes/uploadRoutes';
-import { errorHandler } from '../../../src/middleware/errorHandler';
 import path from 'path';
 import fs from 'fs';
+
+import { User } from '../../../src/models/User.js';
+import { generateAccessToken } from '../../../src/utils/jwt.js';
+import uploadRoutes from '../../../src/routes/uploadRoutes.js';
+import { errorHandler } from '../../../src/middleware/errorHandler.js';
 
 // Create test app
 const createTestApp = (): Express => {

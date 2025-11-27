@@ -1,6 +1,7 @@
 import { MongoMemoryServer } from 'mongodb-memory-server';
 import mongoose from 'mongoose';
 import express, { Express } from 'express';
+
 import {
   authRoutes,
   businessRoutes,
@@ -9,8 +10,8 @@ import {
   uploadRoutes,
   serviceRoutes,
   specialistRoutes,
-} from '../src/routes/index';
-import { errorHandler } from '../src/middleware/errorHandler';
+} from '../src/routes/index.js';
+import { errorHandler } from '../src/middleware/errorHandler.js';
 
 let mongoServer: MongoMemoryServer;
 

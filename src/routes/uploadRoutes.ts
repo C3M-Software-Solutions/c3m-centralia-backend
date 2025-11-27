@@ -1,12 +1,13 @@
 import { Router } from 'express';
+
 import {
   uploadFile,
   uploadFiles,
   deleteFile,
   getStorageInfo,
-} from '../controllers/uploadController';
-import { authenticate, authorize } from '../middleware/auth';
-import { upload, handleUploadError } from '../middleware/upload';
+} from '../controllers/uploadController.js';
+import { authenticate, authorize } from '../middleware/auth.js';
+import { upload, handleUploadError } from '../middleware/upload.js';
 
 const router = Router();
 

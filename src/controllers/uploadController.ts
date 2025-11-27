@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
-import { storageService } from '../utils/storage';
-import { AppError } from '../middleware/errorHandler';
+
+import { storageService } from '../utils/storage.js';
+import { AppError } from '../middleware/errorHandler.js';
 
 /**
  * Upload single file

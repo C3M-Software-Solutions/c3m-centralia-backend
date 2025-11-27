@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { body } from 'express-validator';
+
 import {
   createReservation,
   getReservations,
@@ -7,10 +8,10 @@ import {
   updateReservationStatus,
   checkAvailability,
   getMyReservationsAsSpecialist,
-} from '../controllers/reservationController';
-import { getClinicalRecordByReservation } from '../controllers/clinicalRecordController';
-import { authenticate } from '../middleware/auth';
-import { validate } from '../middleware/validate';
+} from '../controllers/reservationController.js';
+import { getClinicalRecordByReservation } from '../controllers/clinicalRecordController.js';
+import { authenticate } from '../middleware/auth.js';
+import { validate } from '../middleware/validate.js';
 
 const router = Router();
 

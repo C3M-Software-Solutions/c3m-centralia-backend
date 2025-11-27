@@ -1,12 +1,13 @@
 import request from 'supertest';
 import express, { Express } from 'express';
-import { Business } from '../../../src/models/Business';
-import { Service } from '../../../src/models/Service';
-import { User } from '../../../src/models/User';
-import serviceRoutes from '../../../src/routes/serviceRoutes';
-import { errorHandler } from '../../../src/middleware/errorHandler';
-import { hashPassword } from '../../../src/utils/password';
-import { generateAccessToken } from '../../../src/utils/jwt';
+
+import { Business } from '../../../src/models/Business.js';
+import { Service } from '../../../src/models/Service.js';
+import { User } from '../../../src/models/User.js';
+import serviceRoutes from '../../../src/routes/serviceRoutes.js';
+import { errorHandler } from '../../../src/middleware/errorHandler.js';
+import { hashPassword } from '../../../src/utils/password.js';
+import { generateAccessToken } from '../../../src/utils/jwt.js';
 
 // Create test app
 const createTestApp = (): Express => {

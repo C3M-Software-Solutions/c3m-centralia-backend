@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
-import { businessService, availabilityService } from '../services/index';
-import { Specialist } from '../models/index';
+
+import { businessService, availabilityService } from '../services/index.js';
+import { Specialist } from '../models/index.js';
 
 export const createSpecialist = async (req: Request, res: Response) => {
   try {
