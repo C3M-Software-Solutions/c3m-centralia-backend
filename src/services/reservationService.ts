@@ -88,13 +88,17 @@ export class ReservationService {
     });
 
     const populatedReservation = await Reservation.findById(reservation._id)
-      .populate('user', 'name email phone')
-      .populate('business', 'name')
+      .populate('user', 'name email phone avatar')
+      .populate('business', 'name address phone email')
       .populate({
         path: 'specialist',
-        populate: { path: 'user', select: 'name email' },
+        select: 'specialty licenseNumber bio availability services',
+        populate: [
+          { path: 'user', select: 'name email phone avatar' },
+          { path: 'services', select: 'name description duration price category' },
+        ],
       })
-      .populate('service', 'name duration price');
+      .populate('service', 'name description duration price category');
 
     // Send notification to specialist
     if (populatedReservation) {
@@ -115,10 +119,17 @@ export class ReservationService {
     }
 
     const reservation = await Reservation.findById(reservationId)
-      .populate('user', 'name email phone')
-      .populate('business', 'name address')
-      .populate('specialist')
-      .populate('service', 'name duration price');
+      .populate('user', 'name email phone avatar')
+      .populate('business', 'name address phone email')
+      .populate({
+        path: 'specialist',
+        select: 'specialty licenseNumber bio availability services',
+        populate: [
+          { path: 'user', select: 'name email phone avatar' },
+          { path: 'services', select: 'name description duration price category' },
+        ],
+      })
+      .populate('service', 'name description duration price category');
 
     if (!reservation) {
       throw new Error('Reservation not found');
@@ -159,12 +170,20 @@ export class ReservationService {
     }
 
     const reservations = await Reservation.find(query)
-      .populate('user', 'name email phone')
-      .populate('business', 'name address')
-      .populate('specialist')
-      .populate('service', 'name duration price')
+      .populate('user', 'name email phone avatar')
+      .populate('business', 'name address phone email')
+      .populate({
+        path: 'specialist',
+        select: 'specialty licenseNumber bio availability services',
+        populate: [
+          { path: 'user', select: 'name email phone avatar' },
+          { path: 'services', select: 'name description duration price category' },
+        ],
+      })
+      .populate('service', 'name description duration price category')
       .sort({ startDate: 1 });
 
+    console.log('Found reservations:', reservations);
     return reservations;
   }
 
@@ -217,13 +236,17 @@ export class ReservationService {
     await reservation.save();
 
     const updatedReservation = await Reservation.findById(reservationId)
-      .populate('user', 'name email phone')
-      .populate('business', 'name')
+      .populate('user', 'name email phone avatar')
+      .populate('business', 'name address phone email')
       .populate({
         path: 'specialist',
-        populate: { path: 'user', select: 'name email' },
+        select: 'specialty licenseNumber bio availability services',
+        populate: [
+          { path: 'user', select: 'name email phone avatar' },
+          { path: 'services', select: 'name description duration price category' },
+        ],
       })
-      .populate('service', 'name duration price');
+      .populate('service', 'name description duration price category');
 
     // Send notifications based on status change
     if (updatedReservation && data.status && oldStatus !== data.status) {
@@ -305,9 +328,17 @@ export class ReservationService {
     }
 
     const reservations = await Reservation.find(query)
-      .populate('user', 'name email phone')
-      .populate('business', 'name address phone')
-      .populate('service', 'name duration price description')
+      .populate('user', 'name email phone avatar')
+      .populate('business', 'name address phone email')
+      .populate({
+        path: 'specialist',
+        select: 'specialty licenseNumber bio availability services',
+        populate: [
+          { path: 'user', select: 'name email phone avatar' },
+          { path: 'services', select: 'name description duration price category' },
+        ],
+      })
+      .populate('service', 'name description duration price category')
       .sort({ startDate: 1 });
 
     return reservations;

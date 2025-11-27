@@ -1,5 +1,5 @@
 import swaggerJsdoc from 'swagger-jsdoc';
-import { config } from './config/index';
+import { config } from './config/index.js';
 
 const options: swaggerJsdoc.Options = {
   definition: {
@@ -307,40 +307,140 @@ const options: swaggerJsdoc.Options = {
               type: 'string',
             },
             user: {
-              type: 'string',
-              description: 'Client User ID',
+              oneOf: [
+                {
+                  type: 'string',
+                  description: 'Client User ID (when not populated)',
+                },
+                {
+                  type: 'object',
+                  description: 'Client user details (when populated)',
+                  properties: {
+                    _id: { type: 'string' },
+                    name: { type: 'string', example: 'John Doe' },
+                    email: { type: 'string', example: 'client@example.com' },
+                    phone: { type: 'string', example: '+1234567890' },
+                    avatar: { type: 'string', example: 'https://example.com/avatar.jpg' },
+                  },
+                },
+              ],
             },
             business: {
-              type: 'string',
-              description: 'Business ID',
+              oneOf: [
+                {
+                  type: 'string',
+                  description: 'Business ID (when not populated)',
+                },
+                {
+                  type: 'object',
+                  description: 'Business details (when populated)',
+                  properties: {
+                    _id: { type: 'string' },
+                    name: { type: 'string', example: 'Clínica Central' },
+                    address: { type: 'string', example: 'Av. Principal 123' },
+                    phone: { type: 'string', example: '+987654321' },
+                    email: { type: 'string', example: 'clinica@example.com' },
+                  },
+                },
+              ],
             },
             specialist: {
-              type: 'string',
-              description: 'Specialist ID',
+              oneOf: [
+                {
+                  type: 'string',
+                  description: 'Specialist ID (when not populated)',
+                },
+                {
+                  type: 'object',
+                  description: 'Specialist details (when populated)',
+                  properties: {
+                    _id: { type: 'string' },
+                    specialty: { type: 'string', example: 'Physical Therapy' },
+                    licenseNumber: { type: 'string', example: 'LIC-12345' },
+                    bio: { type: 'string', example: 'Experienced specialist' },
+                    user: {
+                      type: 'object',
+                      properties: {
+                        _id: { type: 'string' },
+                        name: { type: 'string', example: 'Dr. Juan Pérez' },
+                        email: { type: 'string', example: 'doctor@example.com' },
+                        phone: { type: 'string', example: '+1234567890' },
+                        avatar: { type: 'string', example: 'https://example.com/avatar.jpg' },
+                      },
+                    },
+                    availability: {
+                      type: 'array',
+                      items: {
+                        type: 'object',
+                        properties: {
+                          day: { type: 'string', example: 'monday' },
+                          startTime: { type: 'string', example: '09:00' },
+                          endTime: { type: 'string', example: '17:00' },
+                          isAvailable: { type: 'boolean', example: true },
+                        },
+                      },
+                    },
+                    services: {
+                      type: 'array',
+                      items: {
+                        type: 'object',
+                        properties: {
+                          _id: { type: 'string' },
+                          name: { type: 'string', example: 'Consultation' },
+                          description: { type: 'string', example: 'General consultation' },
+                          duration: { type: 'number', example: 30 },
+                          price: { type: 'number', example: 50 },
+                          category: { type: 'string', example: 'Medical' },
+                        },
+                      },
+                    },
+                  },
+                },
+              ],
             },
             service: {
-              type: 'string',
-              description: 'Service ID',
+              oneOf: [
+                {
+                  type: 'string',
+                  description: 'Service ID (when not populated)',
+                },
+                {
+                  type: 'object',
+                  description: 'Service details (when populated)',
+                  properties: {
+                    _id: { type: 'string' },
+                    name: { type: 'string', example: 'General Consultation' },
+                    description: { type: 'string', example: 'Standard medical consultation' },
+                    duration: { type: 'number', example: 30 },
+                    price: { type: 'number', example: 50 },
+                    category: { type: 'string', example: 'Medical' },
+                  },
+                },
+              ],
             },
-            startTime: {
+            startDate: {
               type: 'string',
               format: 'date-time',
               example: '2024-12-25T09:00:00.000Z',
             },
-            endTime: {
+            endDate: {
               type: 'string',
               format: 'date-time',
               example: '2024-12-25T10:00:00.000Z',
             },
             status: {
               type: 'string',
-              enum: ['pending', 'confirmed', 'cancelled', 'completed'],
+              enum: ['pending', 'confirmed', 'cancelled', 'completed', 'no-show'],
               example: 'pending',
               description: 'Reservation status. Email notifications are sent on status changes.',
             },
             notes: {
               type: 'string',
               example: 'First time appointment',
+            },
+            cancellationReason: {
+              type: 'string',
+              example: 'Schedule conflict',
             },
             reminderSent: {
               type: 'boolean',

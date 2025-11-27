@@ -268,6 +268,72 @@ describe('Reservation Integration Tests', () => {
       expect(response.body.data.reservation).toBeDefined();
     });
 
+    it('should include complete specialist, service, and business data', async () => {
+      // Update specialist with more data
+      specialist.bio = 'Experienced specialist';
+      specialist.licenseNumber = 'LIC-12345';
+      specialist.availability = [
+        { day: 'monday', startTime: '09:00', endTime: '17:00', isAvailable: true },
+      ];
+      specialist.services = [service._id];
+      await specialist.save();
+
+      const startDate = new Date();
+      const endDate = new Date(startDate.getTime() + 60 * 60000);
+
+      const reservation = await Reservation.create({
+        user: clientUser._id,
+        business: business._id,
+        specialist: specialist._id,
+        service: service._id,
+        startDate,
+        endDate,
+      });
+
+      const response = await request(app)
+        .get(`/api/reservations/${reservation._id}`)
+        .set('Authorization', `Bearer ${clientToken}`)
+        .expect(200);
+
+      const res = response.body.data.reservation;
+
+      // Validate client user data
+      expect(res.user).toBeDefined();
+      expect(res.user.name).toBe('Client User');
+      expect(res.user.email).toBe('client@test.com');
+
+      // Validate business data
+      expect(res.business).toBeDefined();
+      expect(res.business.name).toBe('Test Business');
+
+      // Validate specialist data with nested user
+      expect(res.specialist).toBeDefined();
+      expect(res.specialist.specialty).toBe('General');
+      expect(res.specialist.bio).toBe('Experienced specialist');
+      expect(res.specialist.licenseNumber).toBe('LIC-12345');
+      expect(res.specialist.availability).toBeDefined();
+      expect(res.specialist.availability).toHaveLength(1);
+      expect(res.specialist.availability[0].day).toBe('monday');
+
+      // Validate specialist's user data
+      expect(res.specialist.user).toBeDefined();
+      expect(res.specialist.user.name).toBe('Specialist User');
+      expect(res.specialist.user.email).toBe('specialist@test.com');
+
+      // Validate specialist's services
+      expect(res.specialist.services).toBeDefined();
+      expect(res.specialist.services).toHaveLength(1);
+      expect(res.specialist.services[0].name).toBe('Test Service');
+      expect(res.specialist.services[0].duration).toBe(60);
+      expect(res.specialist.services[0].price).toBe(100);
+
+      // Validate service data
+      expect(res.service).toBeDefined();
+      expect(res.service.name).toBe('Test Service');
+      expect(res.service.duration).toBe(60);
+      expect(res.service.price).toBe(100);
+    });
+
     it('should return 404 for non-existent reservation', async () => {
       const fakeId = new mongoose.Types.ObjectId();
 
