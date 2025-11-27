@@ -6,9 +6,9 @@ import {
   getServiceById,
   updateService,
   deleteService,
-} from '../controllers/serviceController.js';
-import { authenticate } from '../middleware/auth.js';
-import { validate } from '../middleware/validate.js';
+} from '../controllers/serviceController';
+import { authenticate } from '../middleware/auth';
+import { validate } from '../middleware/validate';
 
 const router = Router({ mergeParams: true });
 

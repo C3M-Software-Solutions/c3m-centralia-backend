@@ -1,11 +1,11 @@
-import authRoutes from './authRoutes.js';
-import businessRoutes from './businessRoutes.js';
-import serviceRoutes from './serviceRoutes.js';
-import specialistRoutes from './specialistRoutes.js';
-import reservationRoutes from './reservationRoutes.js';
-import clinicalRecordRoutes from './clinicalRecordRoutes.js';
-import uploadRoutes from './uploadRoutes.js';
-import cronRoutes from './cronRoutes.js';
+import authRoutes from './authRoutes';
+import businessRoutes from './businessRoutes';
+import serviceRoutes from './serviceRoutes';
+import specialistRoutes from './specialistRoutes';
+import reservationRoutes from './reservationRoutes';
+import clinicalRecordRoutes from './clinicalRecordRoutes';
+import uploadRoutes from './uploadRoutes';
+import cronRoutes from './cronRoutes';
 
 export {
   authRoutes,

@@ -7,9 +7,9 @@ import {
   updateSpecialist,
   deleteSpecialist,
   getAvailableSlots,
-} from '../controllers/specialistController.js';
-import { authenticate } from '../middleware/auth.js';
-import { validate } from '../middleware/validate.js';
+} from '../controllers/specialistController';
+import { authenticate } from '../middleware/auth';
+import { validate } from '../middleware/validate';
 
 const router = Router({ mergeParams: true });
 

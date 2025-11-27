@@ -1,7 +1,7 @@
-import { Specialist } from '../../../src/models/Specialist.js';
-import { Business } from '../../../src/models/Business.js';
-import { User } from '../../../src/models/User.js';
-import { hashPassword } from '../../../src/utils/password.js';
+import { Specialist } from '../../../src/models/Specialist';
+import { Business } from '../../../src/models/Business';
+import { User } from '../../../src/models/User';
+import { hashPassword } from '../../../src/utils/password';
 
 describe('Specialist Model Tests', () => {
   let testUser: any;

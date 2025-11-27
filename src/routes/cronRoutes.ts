@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { reminderService } from '../services/reminderService.js';
+import { reminderService } from '../services/reminderService';
 
 const router = Router();
 

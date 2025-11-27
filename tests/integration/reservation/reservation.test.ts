@@ -1,14 +1,14 @@
 import request from 'supertest';
 import { Express } from 'express';
 import mongoose from 'mongoose';
-import { User } from '../../../src/models/User.js';
-import { Business } from '../../../src/models/Business.js';
-import { Specialist } from '../../../src/models/Specialist.js';
-import { Service } from '../../../src/models/Service.js';
-import { Reservation } from '../../../src/models/Reservation.js';
-import { generateAccessToken } from '../../../src/utils/jwt.js';
-import { hashPassword } from '../../../src/utils/password.js';
-import { createTestApp } from '../../setup.js';
+import { User } from '../../../src/models/User';
+import { Business } from '../../../src/models/Business';
+import { Specialist } from '../../../src/models/Specialist';
+import { Service } from '../../../src/models/Service';
+import { Reservation } from '../../../src/models/Reservation';
+import { generateAccessToken } from '../../../src/utils/jwt';
+import { hashPassword } from '../../../src/utils/password';
+import { createTestApp } from '../../setup';
 
 describe('Reservation Integration Tests', () => {
   let app: Express;

@@ -4,9 +4,9 @@ import {
   uploadFiles,
   deleteFile,
   getStorageInfo,
-} from '../controllers/uploadController.js';
-import { authenticate, authorize } from '../middleware/auth.js';
-import { upload, handleUploadError } from '../middleware/upload.js';
+} from '../controllers/uploadController';
+import { authenticate, authorize } from '../middleware/auth';
+import { upload, handleUploadError } from '../middleware/upload';
 
 const router = Router();
 

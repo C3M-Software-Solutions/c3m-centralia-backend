@@ -1,14 +1,14 @@
 import mongoose from 'mongoose';
-import { ReservationService } from '../../../src/services/reservationService.js';
-import { Reservation } from '../../../src/models/Reservation.js';
-import { User } from '../../../src/models/User.js';
-import { Business } from '../../../src/models/Business.js';
-import { Specialist } from '../../../src/models/Specialist.js';
-import { Service } from '../../../src/models/Service.js';
-import type { IUser } from '../../../src/models/User.js';
-import type { IBusiness } from '../../../src/models/Business.js';
-import type { ISpecialist } from '../../../src/models/Specialist.js';
-import type { IService } from '../../../src/models/Service.js';
+import { ReservationService } from '../../../src/services/reservationService';
+import { Reservation } from '../../../src/models/Reservation';
+import { User } from '../../../src/models/User';
+import { Business } from '../../../src/models/Business';
+import { Specialist } from '../../../src/models/Specialist';
+import { Service } from '../../../src/models/Service';
+import type { IUser } from '../../../src/models/User';
+import type { IBusiness } from '../../../src/models/Business';
+import type { ISpecialist } from '../../../src/models/Specialist';
+import type { IService } from '../../../src/models/Service';
 
 let reservationService: ReservationService;
 

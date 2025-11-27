@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
-import { verifyAccessToken, JwtPayload } from '../utils/jwt.js';
-import { AppError } from './errorHandler.js';
-import { User } from '../models/User.js';
+import { verifyAccessToken, JwtPayload } from '../utils/jwt';
+import { AppError } from './errorHandler';
+import { User } from '../models/User';
 
 // Extend Express Request type to include user
 declare module 'express-serve-static-core' {

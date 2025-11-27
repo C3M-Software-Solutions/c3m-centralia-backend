@@ -1,6 +1,6 @@
 import cron, { ScheduledTask } from 'node-cron';
-import { Reservation } from '../models/Reservation.js';
-import { notificationService } from './notificationService.js';
+import { Reservation } from '../models/Reservation';
+import { notificationService } from './notificationService';
 
 export class ReminderService {
   private job: ScheduledTask | null = null;

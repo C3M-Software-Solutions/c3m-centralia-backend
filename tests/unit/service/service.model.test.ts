@@ -1,7 +1,7 @@
-import { Service } from '../../../src/models/Service.js';
-import { Business } from '../../../src/models/Business.js';
-import { User } from '../../../src/models/User.js';
-import { hashPassword } from '../../../src/utils/password.js';
+import { Service } from '../../../src/models/Service';
+import { Business } from '../../../src/models/Business';
+import { User } from '../../../src/models/User';
+import { hashPassword } from '../../../src/utils/password';
 
 describe('Service Model Tests', () => {
   let testUser: any;

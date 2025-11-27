@@ -1,12 +1,12 @@
 import request from 'supertest';
 import express, { Express } from 'express';
-import { Business } from '../../../src/models/Business.js';
-import { Specialist } from '../../../src/models/Specialist.js';
-import { User } from '../../../src/models/User.js';
-import specialistRoutes from '../../../src/routes/specialistRoutes.js';
-import { errorHandler } from '../../../src/middleware/errorHandler.js';
-import { hashPassword } from '../../../src/utils/password.js';
-import { generateAccessToken } from '../../../src/utils/jwt.js';
+import { Business } from '../../../src/models/Business';
+import { Specialist } from '../../../src/models/Specialist';
+import { User } from '../../../src/models/User';
+import specialistRoutes from '../../../src/routes/specialistRoutes';
+import { errorHandler } from '../../../src/middleware/errorHandler';
+import { hashPassword } from '../../../src/utils/password';
+import { generateAccessToken } from '../../../src/utils/jwt';
 
 // Create test app
 const createTestApp = (): Express => {
@@ -187,7 +187,7 @@ describe('Specialist Controller Tests', () => {
 
     it('should create specialist with services', async () => {
       // Create services for the business
-      const Service = (await import('../../../src/models/Service.js')).Service;
+      const Service = (await import('../../../src/models/Service')).Service;
       const service1 = await Service.create({
         business: testBusiness._id,
         name: 'Consultation',
@@ -222,7 +222,7 @@ describe('Specialist Controller Tests', () => {
 
     it('should fail to create specialist with services from different business', async () => {
       // Create another business
-      const Business = (await import('../../../src/models/Business.js')).Business;
+      const Business = (await import('../../../src/models/Business')).Business;
       const otherBusiness = await Business.create({
         user: otherUser._id,
         name: 'Other Business',
@@ -232,7 +232,7 @@ describe('Specialist Controller Tests', () => {
       });
 
       // Create service for other business
-      const Service = (await import('../../../src/models/Service.js')).Service;
+      const Service = (await import('../../../src/models/Service')).Service;
       const otherService = await Service.create({
         business: otherBusiness._id,
         name: 'Other Service',
@@ -328,7 +328,7 @@ describe('Specialist Controller Tests', () => {
 
     it('should populate services information when available', async () => {
       // Create a service
-      const Service = (await import('../../../src/models/Service.js')).Service;
+      const Service = (await import('../../../src/models/Service')).Service;
       const service = await Service.create({
         business: testBusiness._id,
         name: 'Test Service',
@@ -395,7 +395,7 @@ describe('Specialist Controller Tests', () => {
 
     it('should populate user, business, and services in specialist details', async () => {
       // Create a service
-      const Service = (await import('../../../src/models/Service.js')).Service;
+      const Service = (await import('../../../src/models/Service')).Service;
       const service = await Service.create({
         business: testBusiness._id,
         name: 'Consultation',
@@ -502,7 +502,7 @@ describe('Specialist Controller Tests', () => {
 
     it('should update specialist services', async () => {
       // Create services for the business
-      const Service = (await import('../../../src/models/Service.js')).Service;
+      const Service = (await import('../../../src/models/Service')).Service;
       const service1 = await Service.create({
         business: testBusiness._id,
         name: 'Consultation',
@@ -536,7 +536,7 @@ describe('Specialist Controller Tests', () => {
 
     it('should fail to update with services from different business', async () => {
       // Create another business
-      const Business = (await import('../../../src/models/Business.js')).Business;
+      const Business = (await import('../../../src/models/Business')).Business;
       const otherBusiness = await Business.create({
         user: otherUser._id,
         name: 'Other Business',
@@ -546,7 +546,7 @@ describe('Specialist Controller Tests', () => {
       });
 
       // Create service for other business
-      const Service = (await import('../../../src/models/Service.js')).Service;
+      const Service = (await import('../../../src/models/Service')).Service;
       const otherService = await Service.create({
         business: otherBusiness._id,
         name: 'Other Service',

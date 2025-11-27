@@ -7,10 +7,10 @@ import {
   updateReservationStatus,
   checkAvailability,
   getMyReservationsAsSpecialist,
-} from '../controllers/reservationController.js';
-import { getClinicalRecordByReservation } from '../controllers/clinicalRecordController.js';
-import { authenticate } from '../middleware/auth.js';
-import { validate } from '../middleware/validate.js';
+} from '../controllers/reservationController';
+import { getClinicalRecordByReservation } from '../controllers/clinicalRecordController';
+import { authenticate } from '../middleware/auth';
+import { validate } from '../middleware/validate';
 
 const router = Router();
 

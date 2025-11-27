@@ -1,10 +1,10 @@
-import { ClinicalRecord } from '../../../src/models/ClinicalRecord.js';
-import { User } from '../../../src/models/User.js';
-import { Business } from '../../../src/models/Business.js';
-import { Specialist } from '../../../src/models/Specialist.js';
-import type { IUser } from '../../../src/models/User.js';
-import type { IBusiness } from '../../../src/models/Business.js';
-import type { ISpecialist } from '../../../src/models/Specialist.js';
+import { ClinicalRecord } from '../../../src/models/ClinicalRecord';
+import { User } from '../../../src/models/User';
+import { Business } from '../../../src/models/Business';
+import { Specialist } from '../../../src/models/Specialist';
+import type { IUser } from '../../../src/models/User';
+import type { IBusiness } from '../../../src/models/Business';
+import type { ISpecialist } from '../../../src/models/Specialist';
 
 describe('ClinicalRecord Model Tests', () => {
   let user: IUser;

@@ -1,6 +1,6 @@
-import { Specialist } from '../models/Specialist.js';
-import { Service } from '../models/Service.js';
-import { Reservation } from '../models/Reservation.js';
+import { Specialist } from '../models/Specialist';
+import { Service } from '../models/Service';
+import { Reservation } from '../models/Reservation';
 import { Types } from 'mongoose';
 
 export interface AvailableSlot {

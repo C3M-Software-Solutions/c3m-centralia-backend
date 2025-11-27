@@ -1,4 +1,4 @@
-import { storageService } from '../../../src/utils/storage.js';
+import { storageService } from '../../../src/utils/storage';
 import fs from 'fs';
 import path from 'path';
 

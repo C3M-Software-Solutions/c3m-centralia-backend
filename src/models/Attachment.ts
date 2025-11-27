@@ -85,4 +85,5 @@ const attachmentSchema = new Schema<IAttachment>(
 attachmentSchema.index({ ownerType: 1, ownerId: 1 });
 attachmentSchema.index({ uploadedBy: 1, createdAt: -1 });
 
-export const Attachment = mongoose.model<IAttachment>('Attachment', attachmentSchema);
+export const Attachment =
+  mongoose.models.Attachment || mongoose.model<IAttachment>('Attachment', attachmentSchema);

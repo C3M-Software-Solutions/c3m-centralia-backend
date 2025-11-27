@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
-import { reservationService } from '../services/reservationService.js';
-import { Specialist } from '../models/Specialist.js';
-import { AppError } from '../middleware/errorHandler.js';
+import { reservationService } from '../services/reservationService';
+import { Specialist } from '../models/Specialist';
+import { AppError } from '../middleware/errorHandler';
 
 export const createReservation = async (
   req: Request,

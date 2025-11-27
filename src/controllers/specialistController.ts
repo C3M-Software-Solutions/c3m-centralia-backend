@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
-import { businessService, availabilityService } from '../services/index.js';
+import { businessService, availabilityService } from '../services/index';
+import { Specialist } from '../models/index';
 
 export const createSpecialist = async (req: Request, res: Response) => {
   try {
@@ -59,7 +60,6 @@ export const getSpecialistsByBusiness = async (req: Request, res: Response) => {
 export const getSpecialistById = async (req: Request, res: Response) => {
   try {
     const { specialistId } = req.params;
-    const { Specialist } = await import('../models/Specialist.js');
 
     const specialist = await Specialist.findById(specialistId)
       .populate('user', 'name email phone avatar')

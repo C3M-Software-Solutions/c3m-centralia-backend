@@ -1,5 +1,5 @@
-import app from './server.js';
-import { config } from './config/index.js';
+import app from './server';
+import { config } from './config/index';
 
 // Start server when not in Vercel (for production builds)
 if (process.env.VERCEL !== '1') {

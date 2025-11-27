@@ -9,8 +9,8 @@ import {
   uploadRoutes,
   serviceRoutes,
   specialistRoutes,
-} from '../src/routes/index.js';
-import { errorHandler } from '../src/middleware/errorHandler.js';
+} from '../src/routes/index';
+import { errorHandler } from '../src/middleware/errorHandler';
 
 let mongoServer: MongoMemoryServer;
 

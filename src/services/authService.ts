@@ -1,6 +1,6 @@
-import { User } from '../models/User.js';
-import { hashPassword, comparePassword } from '../utils/password.js';
-import { generateAccessToken, generateRefreshToken } from '../utils/jwt.js';
+import { User } from '../models/User';
+import { hashPassword, comparePassword } from '../utils/password';
+import { generateAccessToken, generateRefreshToken } from '../utils/jwt';
 
 export interface RegisterData {
   name: string;
