@@ -236,6 +236,9 @@ See [CONTRIBUTING.md](./CONTRIBUTING.md) for:
 - `POST /api/auth/login` - Login user
 - `GET /api/auth/profile` - Get user profile (protected)
 - `PUT /api/auth/profile` - Update user profile (protected)
+- `POST /api/auth/change-password` - Change password (protected)
+- `POST /api/auth/request-password-reset` - Request password reset (public)
+- `POST /api/auth/reset-password` - Reset password with token (public)
 
 ### Business
 

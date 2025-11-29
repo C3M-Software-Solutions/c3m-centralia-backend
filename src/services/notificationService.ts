@@ -436,6 +436,86 @@ export class NotificationService {
       console.error('Error sending reservation reminder notification:', error);
     }
   }
+
+  async sendPasswordResetEmail(email: string, name: string, resetToken: string): Promise<void> {
+    try {
+      // Use backend static page if FRONTEND_URL is not explicitly set or is localhost:3000
+      const frontendUrl = process.env.FRONTEND_URL;
+      const backendUrl = `http://localhost:${process.env.PORT || 5000}`;
+
+      // If no frontend URL is set or is default, use backend static page
+      const baseUrl =
+        !frontendUrl || frontendUrl === 'http://localhost:3000' ? backendUrl : frontendUrl;
+
+      const resetUrl = `${baseUrl}/reset-password.html?token=${resetToken}`;
+
+      await this.sendEmail({
+        to: email,
+        subject: 'Recuperación de Contraseña - C3M Centralia',
+        html: this.getPasswordResetTemplate(name, resetUrl),
+      });
+    } catch (error) {
+      console.error('Error sending password reset email:', error);
+      throw error;
+    }
+  }
+
+  private getPasswordResetTemplate(name: string, resetUrl: string): string {
+    return `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <style>
+          body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+          .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+          .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+          .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }
+          .button { display: inline-block; padding: 12px 30px; background: #667eea; color: white; text-decoration: none; border-radius: 5px; margin: 20px 0; }
+          .warning { background: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; margin: 20px 0; }
+          .footer { text-align: center; margin-top: 30px; color: #666; font-size: 12px; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h1>🔒 Recuperación de Contraseña</h1>
+          </div>
+          <div class="content">
+            <p>Hola <strong>${name}</strong>,</p>
+            
+            <p>Recibimos una solicitud para restablecer la contraseña de tu cuenta en C3M Centralia.</p>
+            
+            <p>Haz clic en el siguiente botón para crear una nueva contraseña:</p>
+            
+            <div style="text-align: center;">
+              <a href="${resetUrl}" class="button">Restablecer Contraseña</a>
+            </div>
+            
+            <div class="warning">
+              <p><strong>⚠️ Importante:</strong></p>
+              <ul>
+                <li>Este enlace es válido por <strong>1 hora</strong></li>
+                <li>Solo puedes usar este enlace una vez</li>
+                <li>Si no solicitaste este cambio, ignora este correo</li>
+              </ul>
+            </div>
+            
+            <p>Si el botón no funciona, copia y pega este enlace en tu navegador:</p>
+            <p style="word-break: break-all; color: #667eea;">${resetUrl}</p>
+            
+            <p>Si no solicitaste restablecer tu contraseña, puedes ignorar este correo de forma segura. Tu contraseña actual seguirá siendo válida.</p>
+          </div>
+          <div class="footer">
+            <p>Este es un correo automático, por favor no respondas.</p>
+            <p>&copy; 2024 C3M Centralia. Todos los derechos reservados.</p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+  }
 }
 
 export const notificationService = new NotificationService();

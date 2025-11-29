@@ -63,6 +63,9 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 // Serve uploaded files (only for local storage)
 app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
 
+// Serve static files for password reset pages
+app.use(express.static(path.join(process.cwd(), 'public')));
+
 app.get('/swagger.json', (_req, res) => {
   res.setHeader('Content-Type', 'application/json');
   res.send(swaggerSpec);
