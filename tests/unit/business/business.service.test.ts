@@ -342,26 +342,20 @@ describe('Business Service Tests', () => {
 
   describe('Specialist management', () => {
     let testBusiness: any;
-    let specialistUser: any;
 
     beforeEach(async () => {
       testBusiness = await Business.create({
         name: 'Test Business',
         user: testUser._id,
       });
-
-      specialistUser = await User.create({
-        name: 'Specialist User',
-        email: 'specialist@example.com',
-        password: await hashPassword('password123'),
-        role: 'specialist',
-      });
     });
 
     it('should create specialist for business', async () => {
       const specialistData = {
         businessId: testBusiness._id.toString(),
-        userId: specialistUser._id.toString(),
+        name: 'Dr. Unit Test',
+        email: 'unittest@example.com',
+        password: 'password123',
         specialty: 'General',
         bio: 'Expert specialist',
       };
@@ -378,7 +372,9 @@ describe('Business Service Tests', () => {
       const fakeId = '507f1f77bcf86cd799439011';
       const specialistData = {
         businessId: fakeId,
-        userId: specialistUser._id.toString(),
+        name: 'Dr. Fake Business',
+        email: 'fake@example.com',
+        password: 'password123',
         specialty: 'General',
       };
 
@@ -390,7 +386,9 @@ describe('Business Service Tests', () => {
     it('should get specialists by business', async () => {
       await businessService.createSpecialist({
         businessId: testBusiness._id.toString(),
-        userId: specialistUser._id.toString(),
+        name: 'Dr. Get Test',
+        email: 'gettest@example.com',
+        password: 'password123',
         specialty: 'General',
       });
 
@@ -421,7 +419,9 @@ describe('Business Service Tests', () => {
 
       const specialistData = {
         businessId: testBusiness._id.toString(),
-        userId: specialistUser._id.toString(),
+        name: 'Dr. Service Test',
+        email: 'servicetest@example.com',
+        password: 'password123',
         specialty: 'Physical Therapy',
         services: [service1._id.toString(), service2._id.toString()],
       };
@@ -452,7 +452,9 @@ describe('Business Service Tests', () => {
 
       const specialistData = {
         businessId: testBusiness._id.toString(),
-        userId: specialistUser._id.toString(),
+        name: 'Dr. Wrong Business',
+        email: 'wrongbiz@example.com',
+        password: 'password123',
         specialty: 'General',
         services: [service._id.toString()],
       };

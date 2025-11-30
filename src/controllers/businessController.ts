@@ -9,14 +9,27 @@ export const createBusiness = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const userId = req.user?.userId;
-    if (!userId) {
-      throw new AppError('Unauthorized', 401);
+    const { ownerId } = req.body;
+
+    if (!ownerId) {
+      throw new AppError('Owner ID is required', 400);
+    }
+
+    // Verify the ownerId user exists and has 'owner' role
+    const { User } = await import('../models/User.js');
+    const owner = await User.findById(ownerId);
+
+    if (!owner) {
+      throw new AppError('Owner user not found', 404);
+    }
+
+    if (owner.role !== 'owner') {
+      throw new AppError('User must have owner role to own a business', 400);
     }
 
     const business = await businessService.createBusiness({
       ...req.body,
-      ownerId: userId.toString(),
+      ownerId: ownerId,
     });
 
     res.status(201).json({

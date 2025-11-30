@@ -34,7 +34,10 @@ export interface CreateServiceData {
 
 export interface CreateSpecialistData {
   businessId: string;
-  userId: string;
+  name: string;
+  email: string;
+  password: string; // El admin asigna la contraseña inicial
+  phone?: string;
   specialty: string;
   bio?: string;
   schedule?: Array<{
@@ -246,10 +249,19 @@ export class BusinessService {
 
   // Specialist management
   async createSpecialist(data: CreateSpecialistData) {
+    // Import User model
+    const { User } = await import('../models/User.js');
+
     // Verify business exists
     const business = await Business.findById(data.businessId);
     if (!business) {
       throw new Error('Business not found');
+    }
+
+    // Check if user with email already exists
+    const existingUser = await User.findOne({ email: data.email });
+    if (existingUser) {
+      throw new Error('A user with this email already exists');
     }
 
     // Validate services if provided
@@ -264,9 +276,25 @@ export class BusinessService {
       }
     }
 
+    // Import password utilities
+    const { hashPassword } = await import('../utils/password.js');
+    const hashedPassword = await hashPassword(data.password);
+
+    // Create user for the specialist
+    const user = await User.create({
+      name: data.name,
+      email: data.email,
+      password: hashedPassword,
+      phone: data.phone,
+      role: 'specialist',
+      canManagePassword: false, // El especialista NO puede cambiar/recuperar su propia contraseña
+      isActive: true,
+    });
+
+    // Create specialist profile
     const specialist = await Specialist.create({
       business: data.businessId,
-      user: data.userId,
+      user: user._id,
       specialty: data.specialty,
       bio: data.bio,
       availability: data.schedule,
@@ -313,8 +341,7 @@ export class BusinessService {
       specialist.services = data.services as any;
     }
 
-    // Update other fields
-    if (data.userId) specialist.user = data.userId as any;
+    // Update other fields (no userId update - cannot change specialist's user account)
     if (data.specialty) specialist.specialty = data.specialty;
     if (data.bio !== undefined) specialist.bio = data.bio;
     if (data.schedule) specialist.availability = data.schedule as any;
@@ -339,6 +366,40 @@ export class BusinessService {
 
     await Specialist.deleteOne({ _id: specialistId });
     return { message: 'Specialist deleted successfully' };
+  }
+
+  async resetSpecialistPassword(specialistId: string, newPassword: string) {
+    // Find specialist
+    const specialist = await Specialist.findById(specialistId).populate('user');
+    if (!specialist) {
+      throw new Error('Specialist not found');
+    }
+
+    // Get user
+    const { User } = await import('../models/User.js');
+    const user = await User.findById(specialist.user);
+    if (!user) {
+      throw new Error('User not found for specialist');
+    }
+
+    // Verify user is a specialist
+    if (user.role !== 'specialist') {
+      throw new Error('User is not a specialist');
+    }
+
+    // Hash and update password
+    const { hashPassword } = await import('../utils/password.js');
+    user.password = await hashPassword(newPassword);
+    await user.save();
+
+    return {
+      message: 'Specialist password reset successfully',
+      specialist: {
+        id: specialist._id,
+        name: user.name,
+        email: user.email,
+      },
+    };
   }
 }
 

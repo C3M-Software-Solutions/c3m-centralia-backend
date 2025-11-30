@@ -23,6 +23,8 @@ describe('Business Controller Tests', () => {
   let app: Express;
   let adminToken: string;
   let adminUser: any;
+  let ownerToken: string;
+  let ownerUser: any;
   let regularToken: string;
   let regularUser: any;
 
@@ -43,7 +45,21 @@ describe('Business Controller Tests', () => {
       role: adminUser.role,
     });
 
-    // Create regular user
+    // Create owner user
+    ownerUser = await User.create({
+      name: 'Owner User',
+      email: 'owner@example.com',
+      password: await hashPassword('password123'),
+      role: 'owner',
+    });
+
+    ownerToken = generateAccessToken({
+      userId: ownerUser._id,
+      email: ownerUser.email,
+      role: ownerUser.role,
+    });
+
+    // Create regular user (client)
     regularUser = await User.create({
       name: 'Regular User',
       email: 'user@example.com',
@@ -61,6 +77,7 @@ describe('Business Controller Tests', () => {
   describe('POST /api/businesses', () => {
     it('should create a new business successfully', async () => {
       const businessData = {
+        ownerId: ownerUser._id.toString(),
         name: 'New Business',
         description: 'Test business description',
         address: '123 Test St',
@@ -83,6 +100,7 @@ describe('Business Controller Tests', () => {
 
     it('should create business with only required fields', async () => {
       const businessData = {
+        ownerId: ownerUser._id.toString(),
         name: 'Minimal Business',
       };
 
@@ -108,6 +126,7 @@ describe('Business Controller Tests', () => {
 
     it('should fail to create business without name', async () => {
       const businessData = {
+        ownerId: ownerUser._id.toString(),
         description: 'No name business',
       };
 
@@ -122,6 +141,7 @@ describe('Business Controller Tests', () => {
 
     it('should fail to create business with invalid email', async () => {
       const businessData = {
+        ownerId: ownerUser._id.toString(),
         name: 'Test Business',
         email: 'invalid-email',
       };
@@ -135,8 +155,9 @@ describe('Business Controller Tests', () => {
       expect(response.body.status).toBe('error');
     });
 
-    it('should allow regular users to create businesses', async () => {
+    it('should not allow non-admin users to create businesses', async () => {
       const businessData = {
+        ownerId: ownerUser._id.toString(),
         name: 'User Business',
       };
 
@@ -144,10 +165,10 @@ describe('Business Controller Tests', () => {
         .post('/api/businesses')
         .set('Authorization', `Bearer ${regularToken}`)
         .send(businessData)
-        .expect(201);
+        .expect(403);
 
-      expect(response.body.status).toBe('success');
-      expect(response.body.data.business.name).toBe(businessData.name);
+      expect(response.body.status).toBe('error');
+      expect(response.body.message).toContain('permission');
     });
   });
 
@@ -263,7 +284,7 @@ describe('Business Controller Tests', () => {
     beforeEach(async () => {
       ownedBusiness = await Business.create({
         name: 'Owned Business',
-        user: regularUser._id,
+        user: ownerUser._id,
       });
 
       otherBusiness = await Business.create({
@@ -281,7 +302,7 @@ describe('Business Controller Tests', () => {
 
       const response = await request(app)
         .put(`/api/businesses/${ownedBusiness._id}`)
-        .set('Authorization', `Bearer ${regularToken}`)
+        .set('Authorization', `Bearer ${ownerToken}`)
         .send(updateData)
         .expect(200);
 
@@ -356,7 +377,7 @@ describe('Business Controller Tests', () => {
 
       const response = await request(app)
         .put(`/api/businesses/${ownedBusiness._id}`)
-        .set('Authorization', `Bearer ${regularToken}`)
+        .set('Authorization', `Bearer ${ownerToken}`)
         .send(updateData)
         .expect(200);
 
@@ -372,7 +393,7 @@ describe('Business Controller Tests', () => {
     beforeEach(async () => {
       ownedBusiness = await Business.create({
         name: 'Owned Business',
-        user: regularUser._id,
+        user: ownerUser._id,
       });
 
       otherBusiness = await Business.create({
@@ -381,14 +402,18 @@ describe('Business Controller Tests', () => {
       });
     });
 
-    it('should delete own business successfully', async () => {
-      await request(app)
+    it('should only allow admin to delete businesses', async () => {
+      // Owner cannot delete (only admin can)
+      const response = await request(app)
         .delete(`/api/businesses/${ownedBusiness._id}`)
-        .set('Authorization', `Bearer ${regularToken}`)
-        .expect(204);
+        .set('Authorization', `Bearer ${ownerToken}`)
+        .expect(403);
 
-      const deletedBusiness = await Business.findById(ownedBusiness._id);
-      expect(deletedBusiness).toBeNull();
+      expect(response.body.status).toBe('error');
+
+      // Business still exists
+      const business = await Business.findById(ownedBusiness._id);
+      expect(business).toBeDefined();
     });
 
     it('should allow admin to delete any business', async () => {
@@ -409,7 +434,8 @@ describe('Business Controller Tests', () => {
       expect(response.body.status).toBe('error');
     });
 
-    it('should fail to delete other user business', async () => {
+    it('should fail for non-admin users to delete businesses', async () => {
+      // Regular client trying to delete
       const response = await request(app)
         .delete(`/api/businesses/${otherBusiness._id}`)
         .set('Authorization', `Bearer ${regularToken}`)

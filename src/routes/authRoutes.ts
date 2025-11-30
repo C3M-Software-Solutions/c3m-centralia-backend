@@ -10,8 +10,9 @@ import {
   requestPasswordReset,
   resetPassword,
   validateResetToken,
+  createOwner,
 } from '../controllers/authController.js';
-import { authenticate } from '../middleware/auth.js';
+import { authenticate, authorize } from '../middleware/auth.js';
 import { validate } from '../middleware/validate.js';
 
 const router = Router();
@@ -21,7 +22,17 @@ const registerValidation = [
   body('name').trim().notEmpty().withMessage('Name is required'),
   body('email').isEmail().withMessage('Valid email is required'),
   body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters'),
-  body('role').optional().isIn(['admin', 'specialist', 'client']).withMessage('Invalid role'),
+  body('role')
+    .optional()
+    .isIn(['client'])
+    .withMessage('Only client role allowed for public registration'),
+];
+
+const createOwnerValidation = [
+  body('name').trim().notEmpty().withMessage('Name is required'),
+  body('email').isEmail().withMessage('Valid email is required'),
+  body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters'),
+  body('phone').optional().trim(),
 ];
 
 const loginValidation = [
@@ -57,7 +68,13 @@ const resetPasswordValidation = [
  * @swagger
  * /api/auth/register:
  *   post:
- *     summary: Register a new user
+ *     summary: Register a new client user (Public registration)
+ *     description: |
+ *       Public endpoint for client registration. This endpoint only allows creating 'client' role users.
+ *       Other roles must be created through authorized endpoints:
+ *       - **admin**: Created by system administrator
+ *       - **owner**: Created by admin via POST /auth/create-owner
+ *       - **specialist**: Created by business owner via POST /businesses/{businessId}/specialists
  *     tags: [Authentication]
  *     requestBody:
  *       required: true
@@ -84,14 +101,15 @@ const resetPasswordValidation = [
  *                 example: password123
  *               role:
  *                 type: string
- *                 enum: [admin, specialist, client]
+ *                 enum: [client]
  *                 default: client
+ *                 description: Only 'client' role is allowed for public registration. This field is optional and will always be set to 'client'.
  *               phone:
  *                 type: string
  *                 example: +1234567890
  *     responses:
  *       201:
- *         description: User registered successfully
+ *         description: Client registered successfully
  *         content:
  *           application/json:
  *             schema:
@@ -443,5 +461,84 @@ router.post('/reset-password', validate(resetPasswordValidation), resetPassword)
  *         description: Invalid or expired token
  */
 router.get('/validate-reset-token', validateResetToken);
+
+/**
+ * @swagger
+ * /api/auth/create-owner:
+ *   post:
+ *     summary: Create a new business owner (Admin only)
+ *     tags: [Authentication]
+ *     security:
+ *       - bearerAuth: []
+ *     description: Only administrators can create owner accounts. Owners will manage businesses.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - name
+ *               - email
+ *               - password
+ *             properties:
+ *               name:
+ *                 type: string
+ *                 example: Jane Smith
+ *               email:
+ *                 type: string
+ *                 format: email
+ *                 example: jane.smith@business.com
+ *               password:
+ *                 type: string
+ *                 format: password
+ *                 minLength: 6
+ *                 example: ownerpass123
+ *               phone:
+ *                 type: string
+ *                 example: +1234567890
+ *     responses:
+ *       201:
+ *         description: Owner created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: success
+ *                 message:
+ *                   type: string
+ *                   example: Owner created successfully
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     owner:
+ *                       type: object
+ *                       properties:
+ *                         id:
+ *                           type: string
+ *                         name:
+ *                           type: string
+ *                         email:
+ *                           type: string
+ *                         role:
+ *                           type: string
+ *                           example: owner
+ *       401:
+ *         description: Unauthorized - Authentication required
+ *       403:
+ *         description: Forbidden - Only admins can create owners
+ *       409:
+ *         description: Email already registered
+ */
+router.post(
+  '/create-owner',
+  authenticate,
+  authorize('admin'),
+  validate(createOwnerValidation),
+  createOwner
+);
 
 export default router;

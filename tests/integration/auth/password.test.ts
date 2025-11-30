@@ -418,4 +418,106 @@ describe('Password Management Tests', () => {
       expect(Object.keys(response.body.data.user).sort()).toEqual(['email', 'name']);
     });
   });
+
+  describe('Password Management Restrictions for Specialists', () => {
+    let specialistUser: IUser;
+    let specialistToken: string;
+
+    beforeEach(async () => {
+      // Create a specialist user with canManagePassword=false
+      const hashedPassword = await hashPassword('specialist123');
+      specialistUser = await User.create({
+        name: 'Dr. Specialist',
+        email: 'specialist@example.com',
+        password: hashedPassword,
+        role: 'specialist',
+        canManagePassword: false,
+        isActive: true,
+      });
+
+      // Login as specialist
+      const loginResponse = await request(app)
+        .post('/api/auth/login')
+        .send({
+          email: 'specialist@example.com',
+          password: 'specialist123',
+        })
+        .expect(200);
+
+      specialistToken = loginResponse.body.data.accessToken;
+    });
+
+    it('should prevent specialist from changing own password', async () => {
+      const response = await request(app)
+        .post('/api/auth/change-password')
+        .set('Authorization', `Bearer ${specialistToken}`)
+        .send({
+          currentPassword: 'specialist123',
+          newPassword: 'newpassword456',
+        })
+        .expect(403);
+
+      expect(response.body.message).toContain('do not have permission');
+      expect(response.body.message).toContain('contact your supervisor');
+
+      // Verify password wasn't changed
+      const updatedUser = await User.findById(specialistUser._id).select('+password');
+      const bcrypt = await import('bcryptjs');
+      const isMatch = await bcrypt.compare('specialist123', updatedUser!.password);
+      expect(isMatch).toBe(true);
+    });
+
+    it('should silently block specialist from requesting password reset', async () => {
+      // Request should succeed (200) but not send email (security)
+      const response = await request(app)
+        .post('/api/auth/request-password-reset')
+        .send({ email: 'specialist@example.com' })
+        .expect(200);
+
+      expect(response.body.status).toBe('success');
+      expect(response.body.data.message).toContain('can manage passwords');
+
+      // Verify no reset token was generated
+      const updatedUser = await User.findById(specialistUser._id);
+      expect(updatedUser!.resetPasswordToken).toBeUndefined();
+      expect(updatedUser!.resetPasswordExpires).toBeUndefined();
+    });
+
+    it('should allow client user to change password normally', async () => {
+      // Test that normal users are not affected
+      const response = await request(app)
+        .post('/api/auth/change-password')
+        .set('Authorization', `Bearer ${authToken}`)
+        .send({
+          currentPassword: 'oldpassword123',
+          newPassword: 'brandnewpass789',
+        })
+        .expect(200);
+
+      expect(response.body.status).toBe('success');
+      expect(response.body.data.message).toContain('successfully');
+
+      // Verify can login with new password
+      await request(app)
+        .post('/api/auth/login')
+        .send({
+          email: 'test@example.com',
+          password: 'brandnewpass789',
+        })
+        .expect(200);
+    });
+
+    it('should allow client user to request password reset normally', async () => {
+      const response = await request(app)
+        .post('/api/auth/request-password-reset')
+        .send({ email: 'test@example.com' })
+        .expect(200);
+
+      expect(response.body.status).toBe('success');
+      expect(response.body.data.message).toContain('can manage passwords');
+
+      // Note: In test environment, email is disabled, so token generation depends on email config
+      // The important part is that the request succeeds (unlike specialists who are blocked)
+    });
+  });
 });

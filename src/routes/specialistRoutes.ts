@@ -8,15 +8,19 @@ import {
   updateSpecialist,
   deleteSpecialist,
   getAvailableSlots,
+  resetSpecialistPassword,
 } from '../controllers/specialistController.js';
-import { authenticate } from '../middleware/auth.js';
+import { authenticate, authorize } from '../middleware/auth.js';
 import { validate } from '../middleware/validate.js';
 
 const router = Router({ mergeParams: true });
 
 // Validation rules
 const specialistValidation = [
-  body('userId').trim().notEmpty().withMessage('User ID is required'),
+  body('name').trim().notEmpty().withMessage('Name is required'),
+  body('email').isEmail().withMessage('Valid email is required'),
+  body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters'),
+  body('phone').optional().trim(),
   body('specialty').trim().notEmpty().withMessage('Specialty is required'),
   body('bio').optional().trim(),
   body('services').optional().isArray().withMessage('Services must be an array'),
@@ -36,11 +40,19 @@ const specialistValidation = [
     .withMessage('End time must be in HH:MM format'),
 ];
 
+const resetPasswordValidation = [
+  body('newPassword').isLength({ min: 6 }).withMessage('Password must be at least 6 characters'),
+];
+
 /**
  * @swagger
  * /api/businesses/{businessId}/specialists:
  *   post:
- *     summary: Create a new specialist for a business
+ *     summary: Create a new specialist for a business (Owner only)
+ *     description: |
+ *       Only the business owner can create specialists for their business.
+ *       This creates both a user account and specialist profile with initial password.
+ *       **Important**: Specialists cannot change their own password later - only the owner can reset it.
  *     tags: [Specialists]
  *     security:
  *       - bearerAuth: []
@@ -58,12 +70,27 @@ const specialistValidation = [
  *           schema:
  *             type: object
  *             required:
- *               - userId
+ *               - name
+ *               - email
+ *               - password
  *               - specialty
  *             properties:
- *               userId:
+ *               name:
  *                 type: string
- *                 example: 507f1f77bcf86cd799439011
+ *                 example: Dr. John Smith
+ *               email:
+ *                 type: string
+ *                 format: email
+ *                 example: john.smith@example.com
+ *               password:
+ *                 type: string
+ *                 format: password
+ *                 minLength: 6
+ *                 example: initialpass123
+ *                 description: Initial password set by business owner
+ *               phone:
+ *                 type: string
+ *                 example: "+1234567890"
  *               specialty:
  *                 type: string
  *                 example: Physical Therapy
@@ -96,13 +123,21 @@ const specialistValidation = [
  *                       example: true
  *     responses:
  *       201:
- *         description: Specialist created successfully
+ *         description: Specialist created successfully (user account + specialist profile)
+ *       400:
+ *         description: Validation error or email already exists
  *       401:
  *         description: Unauthorized
  *       403:
- *         description: Forbidden
+ *         description: Forbidden - Not business owner
  */
-router.post('/', authenticate, validate(specialistValidation), createSpecialist);
+router.post(
+  '/',
+  authenticate,
+  authorize('owner'),
+  validate(specialistValidation),
+  createSpecialist
+);
 
 /**
  * @swagger
@@ -184,7 +219,8 @@ router.get('/:specialistId', getSpecialistById);
  * @swagger
  * /api/businesses/{businessId}/specialists/{specialistId}:
  *   put:
- *     summary: Update specialist
+ *     summary: Update specialist (Owner only)
+ *     description: Only the business owner can update their specialists
  *     tags: [Specialists]
  *     security:
  *       - bearerAuth: []
@@ -236,13 +272,14 @@ router.get('/:specialistId', getSpecialistById);
  *       404:
  *         description: Specialist not found
  */
-router.put('/:specialistId', authenticate, updateSpecialist);
+router.put('/:specialistId', authenticate, authorize('owner'), updateSpecialist);
 
 /**
  * @swagger
  * /api/businesses/{businessId}/specialists/{specialistId}:
  *   delete:
- *     summary: Delete specialist
+ *     summary: Delete specialist (Owner only)
+ *     description: Only the business owner can delete their specialists
  *     tags: [Specialists]
  *     security:
  *       - bearerAuth: []
@@ -269,7 +306,86 @@ router.put('/:specialistId', authenticate, updateSpecialist);
  *       404:
  *         description: Specialist not found
  */
-router.delete('/:specialistId', authenticate, deleteSpecialist);
+router.delete('/:specialistId', authenticate, authorize('owner'), deleteSpecialist);
+
+/**
+ * @swagger
+ * /api/businesses/{businessId}/specialists/{specialistId}/reset-password:
+ *   post:
+ *     summary: Reset specialist password (Admin/Business Owner only)
+ *     description: Allows business owner to reset a specialist's password. Specialists cannot change their own passwords.
+ *     tags: [Specialists]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: businessId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Business ID
+ *       - in: path
+ *         name: specialistId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Specialist ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - newPassword
+ *             properties:
+ *               newPassword:
+ *                 type: string
+ *                 format: password
+ *                 minLength: 6
+ *                 example: newpassword123
+ *     responses:
+ *       200:
+ *         description: Password reset successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: success
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     message:
+ *                       type: string
+ *                       example: Specialist password reset successfully
+ *                     specialist:
+ *                       type: object
+ *                       properties:
+ *                         id:
+ *                           type: string
+ *                         name:
+ *                           type: string
+ *                         email:
+ *                           type: string
+ *       400:
+ *         description: Invalid request or password too short
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden - Not business owner
+ *       404:
+ *         description: Specialist not found
+ */
+router.post(
+  '/:specialistId/reset-password',
+  authenticate,
+  authorize('owner'),
+  validate(resetPasswordValidation),
+  resetSpecialistPassword
+);
 
 /**
  * @swagger

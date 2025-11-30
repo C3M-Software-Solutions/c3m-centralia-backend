@@ -8,9 +8,16 @@ export interface RegisterData {
   name: string;
   email: string;
   password: string;
-  role?: 'admin' | 'specialist' | 'client';
+  role?: 'admin' | 'owner' | 'specialist' | 'client';
   phone?: string;
   avatar?: string;
+}
+
+export interface CreateOwnerData {
+  name: string;
+  email: string;
+  password: string;
+  phone?: string;
 }
 
 export interface LoginData {
@@ -129,9 +136,14 @@ export class AuthService {
 
   async changePassword(userId: string, currentPassword: string, newPassword: string) {
     // Find user with password
-    const user = await User.findById(userId).select('+password');
+    const user = await User.findById(userId).select('+password +canManagePassword');
     if (!user) {
       throw new Error('User not found');
+    }
+
+    // Check if user can manage their own password
+    if (!user.canManagePassword) {
+      throw new Error('User cannot manage their own password. Contact your supervisor.');
     }
 
     // Verify current password
@@ -140,18 +152,28 @@ export class AuthService {
       throw new Error('Current password is incorrect');
     }
 
-    // Hash and update new password
-    user.password = await hashPassword(newPassword);
+    // Hash new password
+    const hashedPassword = await hashPassword(newPassword);
+
+    // Update password
+    user.password = hashedPassword;
     await user.save();
 
-    return { message: 'Password changed successfully' };
+    return {
+      message: 'Password changed successfully',
+    };
   }
 
   async requestPasswordReset(email: string) {
-    const user = await User.findOne({ email });
-    if (!user) {
-      // Don't reveal if user exists for security
-      return { message: 'If the email exists, a reset link has been sent' };
+    // Find user
+    const user = await User.findOne({ email }).select('+canManagePassword');
+
+    // If user doesn't exist or cannot manage password, silently return (security)
+    if (!user || !user.canManagePassword) {
+      // Don't send email, don't reveal if user exists
+      return {
+        message: 'If the email exists and can manage passwords, a reset link has been sent',
+      };
     }
 
     // Generate reset token (32 bytes = 64 hex characters)
@@ -223,6 +245,39 @@ export class AuthService {
         name: user.name,
         email: user.email,
       },
+    };
+  }
+
+  /**
+   * Create owner user - Only admins can do this
+   * Owner will manage their business
+   */
+  async createOwner(data: CreateOwnerData) {
+    // Check if user already exists
+    const existingUser = await User.findOne({ email: data.email });
+    if (existingUser) {
+      throw new Error('User with this email already exists');
+    }
+
+    // Hash password
+    const hashedPassword = await hashPassword(data.password);
+
+    // Create owner user
+    const owner = await User.create({
+      name: data.name,
+      email: data.email,
+      password: hashedPassword,
+      phone: data.phone,
+      role: 'owner',
+      canManagePassword: true, // Owner can manage their own password
+      isActive: true,
+    });
+
+    return {
+      id: owner._id,
+      name: owner.name,
+      email: owner.email,
+      role: owner.role,
     };
   }
 }

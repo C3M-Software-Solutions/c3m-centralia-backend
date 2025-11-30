@@ -746,7 +746,8 @@
   "paths": {
     "/api/auth/register": {
       "post": {
-        "summary": "Register a new user",
+        "summary": "Register a new client user (Public registration)",
+        "description": "Public endpoint for client registration. This endpoint only allows creating 'client' role users.\nOther roles must be created through authorized endpoints:\n- **admin**: Created by system administrator\n- **owner**: Created by admin via POST /auth/create-owner\n- **specialist**: Created by business owner via POST /businesses/{businessId}/specialists\n",
         "tags": ["Authentication"],
         "requestBody": {
           "required": true,
@@ -773,8 +774,9 @@
                   },
                   "role": {
                     "type": "string",
-                    "enum": ["admin", "specialist", "client"],
-                    "default": "client"
+                    "enum": ["client"],
+                    "default": "client",
+                    "description": "Only 'client' role is allowed for public registration. This field is optional and will always be set to 'client'."
                   },
                   "phone": {
                     "type": "string",
@@ -787,7 +789,7 @@
         },
         "responses": {
           "201": {
-            "description": "User registered successfully",
+            "description": "Client registered successfully",
             "content": {
               "application/json": {
                 "schema": {
@@ -1202,26 +1204,192 @@
         }
       }
     },
-    "/api/businesses": {
+    "/api/auth/validate-reset-token": {
+      "get": {
+        "summary": "Validate a password reset token",
+        "tags": ["Authentication"],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Reset token to validate",
+            "example": "a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0u1v2w3x4y5z6"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Token is valid",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "example": "success"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "valid": {
+                          "type": "boolean",
+                          "example": true
+                        },
+                        "user": {
+                          "type": "object",
+                          "properties": {
+                            "name": {
+                              "type": "string",
+                              "example": "John Doe"
+                            },
+                            "email": {
+                              "type": "string",
+                              "example": "john@example.com"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid or expired token"
+          }
+        }
+      }
+    },
+    "/api/auth/create-owner": {
       "post": {
-        "summary": "Create a new business",
-        "tags": ["Businesses"],
+        "summary": "Create a new business owner (Admin only)",
+        "tags": ["Authentication"],
         "security": [
           {
             "bearerAuth": []
           }
         ],
+        "description": "Only administrators can create owner accounts. Owners will manage businesses.",
         "requestBody": {
           "required": true,
           "content": {
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": ["name", "ruc"],
+                "required": ["name", "email", "password"],
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "example": "Jane Smith"
+                  },
+                  "email": {
+                    "type": "string",
+                    "format": "email",
+                    "example": "jane.smith@business.com"
+                  },
+                  "password": {
+                    "type": "string",
+                    "format": "password",
+                    "minLength": 6,
+                    "example": "ownerpass123"
+                  },
+                  "phone": {
+                    "type": "string",
+                    "example": 1234567890
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Owner created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "example": "success"
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Owner created successfully"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "owner": {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string"
+                            },
+                            "name": {
+                              "type": "string"
+                            },
+                            "email": {
+                              "type": "string"
+                            },
+                            "role": {
+                              "type": "string",
+                              "example": "owner"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Authentication required"
+          },
+          "403": {
+            "description": "Forbidden - Only admins can create owners"
+          },
+          "409": {
+            "description": "Email already registered"
+          }
+        }
+      }
+    },
+    "/api/businesses": {
+      "post": {
+        "summary": "Create a new business (Admin only)",
+        "tags": ["Businesses"],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "description": "Only administrators can create new businesses. The admin will assign an owner to the business.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["name", "ownerId"],
                 "properties": {
                   "name": {
                     "type": "string",
                     "example": "Wellness Center"
+                  },
+                  "ownerId": {
+                    "type": "string",
+                    "format": "objectId",
+                    "example": "507f1f77bcf86cd799439011",
+                    "description": "ID of the user who will own this business (must have 'owner' role)"
                   },
                   "ruc": {
                     "type": "string",
@@ -1286,7 +1454,7 @@
             "description": "Unauthorized"
           },
           "403": {
-            "description": "Forbidden - insufficient permissions"
+            "description": "Forbidden - Only admins can create businesses"
           }
         }
       },
@@ -1511,13 +1679,14 @@
         }
       },
       "put": {
-        "summary": "Update business",
+        "summary": "Update business (Owner or Admin only)",
         "tags": ["Businesses"],
         "security": [
           {
             "bearerAuth": []
           }
         ],
+        "description": "Only the business owner or administrators can update business information",
         "parameters": [
           {
             "in": "path",
@@ -1560,7 +1729,7 @@
             "description": "Unauthorized"
           },
           "403": {
-            "description": "Forbidden"
+            "description": "Forbidden - Only owner or admin can update"
           },
           "404": {
             "description": "Business not found"
@@ -1568,13 +1737,14 @@
         }
       },
       "delete": {
-        "summary": "Delete business",
+        "summary": "Delete business (Admin only)",
         "tags": ["Businesses"],
         "security": [
           {
             "bearerAuth": []
           }
         ],
+        "description": "Only administrators can delete businesses",
         "parameters": [
           {
             "in": "path",
@@ -1594,7 +1764,7 @@
             "description": "Unauthorized"
           },
           "403": {
-            "description": "Forbidden"
+            "description": "Forbidden - Only admins can delete businesses"
           },
           "404": {
             "description": "Business not found"
@@ -2453,7 +2623,8 @@
     },
     "/api/businesses/{businessId}/services": {
       "post": {
-        "summary": "Create a new service for a business",
+        "summary": "Create a new service for a business (Owner only)",
+        "description": "Only the business owner can create services for their business",
         "tags": ["Services"],
         "security": [
           {
@@ -2595,7 +2766,8 @@
         }
       },
       "put": {
-        "summary": "Update service",
+        "summary": "Update service (Owner only)",
+        "description": "Only the business owner can update their services",
         "tags": ["Services"],
         "security": [
           {
@@ -2664,7 +2836,8 @@
         }
       },
       "delete": {
-        "summary": "Delete service",
+        "summary": "Delete service (Owner only)",
+        "description": "Only the business owner can delete their services",
         "tags": ["Services"],
         "security": [
           {
@@ -2709,7 +2882,8 @@
     },
     "/api/businesses/{businessId}/specialists": {
       "post": {
-        "summary": "Create a new specialist for a business",
+        "summary": "Create a new specialist for a business (Owner only)",
+        "description": "Only the business owner can create specialists for their business.\nThis creates both a user account and specialist profile with initial password.\n**Important**: Specialists cannot change their own password later - only the owner can reset it.\n",
         "tags": ["Specialists"],
         "security": [
           {
@@ -2733,11 +2907,27 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": ["userId", "specialty"],
+                "required": ["name", "email", "password", "specialty"],
                 "properties": {
-                  "userId": {
+                  "name": {
                     "type": "string",
-                    "example": "507f1f77bcf86cd799439011"
+                    "example": "Dr. John Smith"
+                  },
+                  "email": {
+                    "type": "string",
+                    "format": "email",
+                    "example": "john.smith@example.com"
+                  },
+                  "password": {
+                    "type": "string",
+                    "format": "password",
+                    "minLength": 6,
+                    "example": "initialpass123",
+                    "description": "Initial password set by business owner"
+                  },
+                  "phone": {
+                    "type": "string",
+                    "example": "+1234567890"
                   },
                   "specialty": {
                     "type": "string",
@@ -2795,13 +2985,16 @@
         },
         "responses": {
           "201": {
-            "description": "Specialist created successfully"
+            "description": "Specialist created successfully (user account + specialist profile)"
+          },
+          "400": {
+            "description": "Validation error or email already exists"
           },
           "401": {
             "description": "Unauthorized"
           },
           "403": {
-            "description": "Forbidden"
+            "description": "Forbidden - Not business owner"
           }
         }
       },
@@ -2907,7 +3100,8 @@
         }
       },
       "put": {
-        "summary": "Update specialist",
+        "summary": "Update specialist (Owner only)",
+        "description": "Only the business owner can update their specialists",
         "tags": ["Specialists"],
         "security": [
           {
@@ -2990,7 +3184,8 @@
         }
       },
       "delete": {
-        "summary": "Delete specialist",
+        "summary": "Delete specialist (Owner only)",
+        "description": "Only the business owner can delete their specialists",
         "tags": ["Specialists"],
         "security": [
           {
@@ -3026,6 +3221,110 @@
           },
           "403": {
             "description": "Forbidden"
+          },
+          "404": {
+            "description": "Specialist not found"
+          }
+        }
+      }
+    },
+    "/api/businesses/{businessId}/specialists/{specialistId}/reset-password": {
+      "post": {
+        "summary": "Reset specialist password (Admin/Business Owner only)",
+        "description": "Allows business owner to reset a specialist's password. Specialists cannot change their own passwords.",
+        "tags": ["Specialists"],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "businessId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Business ID"
+          },
+          {
+            "in": "path",
+            "name": "specialistId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Specialist ID"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["newPassword"],
+                "properties": {
+                  "newPassword": {
+                    "type": "string",
+                    "format": "password",
+                    "minLength": 6,
+                    "example": "newpassword123"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Password reset successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "example": "success"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string",
+                          "example": "Specialist password reset successfully"
+                        },
+                        "specialist": {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string"
+                            },
+                            "name": {
+                              "type": "string"
+                            },
+                            "email": {
+                              "type": "string"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request or password too short"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - Not business owner"
           },
           "404": {
             "description": "Specialist not found"

@@ -22,7 +22,10 @@ export const createSpecialist = async (req: Request, res: Response) => {
 
     const specialist = await businessService.createSpecialist({
       businessId,
-      userId: req.body.userId,
+      name: req.body.name,
+      email: req.body.email,
+      password: req.body.password,
+      phone: req.body.phone,
       specialty: req.body.specialty,
       bio: req.body.bio,
       schedule: req.body.schedule,
@@ -104,7 +107,6 @@ export const updateSpecialist = async (req: Request, res: Response) => {
     }
 
     const specialist = await businessService.updateSpecialist(specialistId, businessId, {
-      userId: req.body.userId,
       specialty: req.body.specialty,
       bio: req.body.bio,
       schedule: req.body.schedule,
@@ -150,6 +152,53 @@ export const deleteSpecialist = async (req: Request, res: Response) => {
     return res.status(400).json({
       status: 'error',
       message: error instanceof Error ? error.message : 'Failed to delete specialist',
+    });
+  }
+};
+
+export const resetSpecialistPassword = async (req: Request, res: Response) => {
+  try {
+    const { businessId, specialistId } = req.params;
+    const { newPassword } = req.body;
+    const userId = req.user!.userId;
+
+    if (!newPassword) {
+      return res.status(400).json({
+        status: 'error',
+        message: 'New password is required',
+      });
+    }
+
+    if (newPassword.length < 6) {
+      return res.status(400).json({
+        status: 'error',
+        message: 'Password must be at least 6 characters',
+      });
+    }
+
+    // Verify user owns the business
+    const business = await businessService.getBusinessById(businessId);
+    const businessOwnerId = business.user._id
+      ? business.user._id.toString()
+      : business.user.toString();
+    if (businessOwnerId !== userId) {
+      return res.status(403).json({
+        status: 'error',
+        message: 'You are not authorized to reset passwords for this business',
+      });
+    }
+
+    // Reset specialist password
+    const result = await businessService.resetSpecialistPassword(specialistId, newPassword);
+
+    return res.status(200).json({
+      status: 'success',
+      data: result,
+    });
+  } catch (error) {
+    return res.status(400).json({
+      status: 'error',
+      message: error instanceof Error ? error.message : 'Failed to reset password',
     });
   }
 };

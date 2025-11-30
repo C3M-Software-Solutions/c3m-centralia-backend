@@ -4,10 +4,11 @@ export interface IUser extends Document {
   name: string;
   email: string;
   password: string;
-  role: 'admin' | 'specialist' | 'client';
+  role: 'admin' | 'owner' | 'specialist' | 'client';
   phone?: string;
   avatar?: string;
   isActive: boolean;
+  canManagePassword: boolean; // Si false, solo el admin puede cambiar/resetear su contraseña
   resetPasswordToken?: string;
   resetPasswordExpires?: Date;
   createdAt: Date;
@@ -40,8 +41,8 @@ const userSchema = new Schema<IUser>(
     role: {
       type: String,
       enum: {
-        values: ['admin', 'specialist', 'client'],
-        message: 'Role must be admin, specialist, or client',
+        values: ['admin', 'owner', 'specialist', 'client'],
+        message: 'Role must be admin, owner, specialist, or client',
       },
       default: 'client',
     },
@@ -55,6 +56,11 @@ const userSchema = new Schema<IUser>(
     isActive: {
       type: Boolean,
       default: true,
+    },
+    canManagePassword: {
+      type: Boolean,
+      default: true, // Por defecto, los usuarios pueden gestionar su contraseña
+      // Los especialistas creados por admin tendrán esto en false
     },
     resetPasswordToken: {
       type: String,

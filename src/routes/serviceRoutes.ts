@@ -8,7 +8,7 @@ import {
   updateService,
   deleteService,
 } from '../controllers/serviceController.js';
-import { authenticate } from '../middleware/auth.js';
+import { authenticate, authorize } from '../middleware/auth.js';
 import { validate } from '../middleware/validate.js';
 
 const router = Router({ mergeParams: true });
@@ -28,7 +28,8 @@ const serviceValidation = [
  * @swagger
  * /api/businesses/{businessId}/services:
  *   post:
- *     summary: Create a new service for a business
+ *     summary: Create a new service for a business (Owner only)
+ *     description: Only the business owner can create services for their business
  *     tags: [Services]
  *     security:
  *       - bearerAuth: []
@@ -73,7 +74,7 @@ const serviceValidation = [
  *       403:
  *         description: Forbidden
  */
-router.post('/', authenticate, validate(serviceValidation), createService);
+router.post('/', authenticate, authorize('owner'), validate(serviceValidation), createService);
 
 /**
  * @swagger
@@ -140,7 +141,8 @@ router.get('/:serviceId', getServiceById);
  * @swagger
  * /api/businesses/{businessId}/services/{serviceId}:
  *   put:
- *     summary: Update service
+ *     summary: Update service (Owner only)
+ *     description: Only the business owner can update their services
  *     tags: [Services]
  *     security:
  *       - bearerAuth: []
@@ -183,13 +185,14 @@ router.get('/:serviceId', getServiceById);
  *       404:
  *         description: Service not found
  */
-router.put('/:serviceId', authenticate, updateService);
+router.put('/:serviceId', authenticate, authorize('owner'), updateService);
 
 /**
  * @swagger
  * /api/businesses/{businessId}/services/{serviceId}:
  *   delete:
- *     summary: Delete service
+ *     summary: Delete service (Owner only)
+ *     description: Only the business owner can delete their services
  *     tags: [Services]
  *     security:
  *       - bearerAuth: []
@@ -216,6 +219,6 @@ router.put('/:serviceId', authenticate, updateService);
  *       404:
  *         description: Service not found
  */
-router.delete('/:serviceId', authenticate, deleteService);
+router.delete('/:serviceId', authenticate, authorize('owner'), deleteService);
 
 export default router;

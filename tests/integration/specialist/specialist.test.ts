@@ -35,7 +35,7 @@ describe('Specialist Controller Tests', () => {
       name: 'Business Owner',
       email: 'owner@example.com',
       password: await hashPassword('password123'),
-      role: 'client',
+      role: 'owner',
     });
 
     ownerToken = generateAccessToken({
@@ -78,7 +78,10 @@ describe('Specialist Controller Tests', () => {
   describe('POST /api/businesses/:businessId/specialists', () => {
     it('should create a new specialist successfully', async () => {
       const specialistData = {
-        userId: specialistUser._id.toString(),
+        name: 'Dr. Specialist Test',
+        email: 'newspecialist@test.com',
+        password: 'password123',
+        phone: '+1234567890',
         specialty: 'Physical Therapy',
         bio: 'Experienced therapist with 10 years of practice',
         schedule: [
@@ -107,11 +110,23 @@ describe('Specialist Controller Tests', () => {
       expect(response.body.data.specialist).toBeDefined();
       expect(response.body.data.specialist.specialty).toBe(specialistData.specialty);
       expect(response.body.data.specialist.isActive).toBe(true);
+      expect(response.body.data.specialist.user.name).toBe(specialistData.name);
+      expect(response.body.data.specialist.user.email).toBe(specialistData.email);
+
+      // Verify user was created with correct role and canManagePassword
+      const createdUser = await User.findOne({ email: specialistData.email }).select(
+        '+canManagePassword'
+      );
+      expect(createdUser).toBeDefined();
+      expect(createdUser!.role).toBe('specialist');
+      expect(createdUser!.canManagePassword).toBe(false);
     });
 
     it('should create specialist with only required fields', async () => {
       const specialistData = {
-        userId: specialistUser._id.toString(),
+        name: 'Dr. Minimal Test',
+        email: 'minimal@test.com',
+        password: 'password123',
         specialty: 'Massage Therapy',
       };
 
@@ -127,7 +142,9 @@ describe('Specialist Controller Tests', () => {
 
     it('should fail without authentication', async () => {
       const specialistData = {
-        userId: specialistUser._id.toString(),
+        name: 'Test',
+        email: 'test@test.com',
+        password: 'password123',
         specialty: 'Therapy',
       };
 
@@ -139,7 +156,9 @@ describe('Specialist Controller Tests', () => {
 
     it('should fail when user does not own business', async () => {
       const specialistData = {
-        userId: specialistUser._id.toString(),
+        name: 'Test',
+        email: 'test2@test.com',
+        password: 'password123',
         specialty: 'Therapy',
       };
 
@@ -150,7 +169,7 @@ describe('Specialist Controller Tests', () => {
         .expect(403);
 
       expect(response.body.status).toBe('error');
-      expect(response.body.message).toContain('not authorized');
+      expect(response.body.message).toContain('permission');
     });
 
     it('should fail without required fields', async () => {
@@ -205,7 +224,9 @@ describe('Specialist Controller Tests', () => {
       });
 
       const specialistData = {
-        userId: specialistUser._id.toString(),
+        name: 'Dr. Service Test',
+        email: 'service@test.com',
+        password: 'password123',
         specialty: 'General Medicine',
         services: [service1._id.toString(), service2._id.toString()],
       };
@@ -243,7 +264,9 @@ describe('Specialist Controller Tests', () => {
       });
 
       const specialistData = {
-        userId: specialistUser._id.toString(),
+        name: 'Dr. Wrong Service Test',
+        email: 'wrongservice@test.com',
+        password: 'password123',
         specialty: 'General Medicine',
         services: [otherService._id.toString()],
       };
@@ -616,6 +639,96 @@ describe('Specialist Controller Tests', () => {
         .delete(`/api/businesses/${testBusiness._id}/specialists/${fakeId}`)
         .set('Authorization', `Bearer ${ownerToken}`)
         .expect(400);
+    });
+  });
+
+  describe('POST /api/businesses/:businessId/specialists/:specialistId/reset-password', () => {
+    let testSpecialist: any;
+
+    beforeEach(async () => {
+      // Create a specialist via the API to ensure proper setup
+      const specialistData = {
+        name: 'Dr. Password Test',
+        email: 'passwordtest@example.com',
+        password: 'initial123',
+        specialty: 'Cardiology',
+      };
+
+      const response = await request(app)
+        .post(`/api/businesses/${testBusiness._id}/specialists`)
+        .set('Authorization', `Bearer ${ownerToken}`)
+        .send(specialistData);
+
+      testSpecialist = response.body.data.specialist;
+    });
+
+    it('should reset specialist password by business owner', async () => {
+      const newPassword = 'newpass456';
+
+      const response = await request(app)
+        .post(
+          `/api/businesses/${testBusiness._id}/specialists/${testSpecialist._id}/reset-password`
+        )
+        .set('Authorization', `Bearer ${ownerToken}`)
+        .send({ newPassword })
+        .expect(200);
+
+      expect(response.body.status).toBe('success');
+      expect(response.body.data.message).toContain('reset successfully');
+      expect(response.body.data.specialist.email).toBe('passwordtest@example.com');
+
+      // Verify specialist can login with new password
+      const { AuthService } = await import('../../../src/services/authService.js');
+      const authService = new AuthService();
+      const loginResult = await authService.login({
+        email: 'passwordtest@example.com',
+        password: newPassword,
+      });
+      expect(loginResult.user.email).toBe('passwordtest@example.com');
+    });
+
+    it('should fail without authentication', async () => {
+      await request(app)
+        .post(
+          `/api/businesses/${testBusiness._id}/specialists/${testSpecialist._id}/reset-password`
+        )
+        .send({ newPassword: 'newpass123' })
+        .expect(401);
+    });
+
+    it('should fail when user does not own business', async () => {
+      const response = await request(app)
+        .post(
+          `/api/businesses/${testBusiness._id}/specialists/${testSpecialist._id}/reset-password`
+        )
+        .set('Authorization', `Bearer ${otherUserToken}`)
+        .send({ newPassword: 'newpass123' })
+        .expect(403);
+
+      expect(response.body.message).toContain('permission');
+    });
+
+    it('should fail with invalid password (too short)', async () => {
+      const response = await request(app)
+        .post(
+          `/api/businesses/${testBusiness._id}/specialists/${testSpecialist._id}/reset-password`
+        )
+        .set('Authorization', `Bearer ${ownerToken}`)
+        .send({ newPassword: '123' })
+        .expect(400);
+
+      expect(response.body.message).toContain('Validation failed');
+    });
+
+    it('should fail for non-existent specialist', async () => {
+      const fakeId = '507f1f77bcf86cd799439011';
+      const response = await request(app)
+        .post(`/api/businesses/${testBusiness._id}/specialists/${fakeId}/reset-password`)
+        .set('Authorization', `Bearer ${ownerToken}`)
+        .send({ newPassword: 'newpass123' })
+        .expect(400);
+
+      expect(response.body.message).toBeDefined();
     });
   });
 });

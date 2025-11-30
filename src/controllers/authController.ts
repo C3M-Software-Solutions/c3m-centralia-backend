@@ -5,13 +5,14 @@ import { AppError } from '../middleware/errorHandler.js';
 
 export const register = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const { name, email, password, role, phone, avatar } = req.body;
+    const { name, email, password, phone, avatar } = req.body;
 
+    // Public registration is only for clients
     const result = await authService.register({
       name,
       email,
       password,
-      role,
+      role: 'client', // Force client role for public registration
       phone,
       avatar,
     });
@@ -141,7 +142,14 @@ export const changePassword = async (
     });
   } catch (error) {
     if (error instanceof Error) {
-      if (error.message.includes('incorrect')) {
+      if (error.message.includes('cannot manage')) {
+        next(
+          new AppError(
+            'You do not have permission to change your password. Please contact your supervisor.',
+            403
+          )
+        );
+      } else if (error.message.includes('incorrect')) {
         next(new AppError('Current password is incorrect', 400));
       } else if (error.message.includes('not found')) {
         next(new AppError('User not found', 404));
@@ -154,11 +162,7 @@ export const changePassword = async (
   }
 };
 
-export const requestPasswordReset = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<void> => {
+export const requestPasswordReset = async (req: Request, res: Response): Promise<void> => {
   try {
     const { email } = req.body;
 
@@ -166,18 +170,25 @@ export const requestPasswordReset = async (
       throw new AppError('Email is required', 400);
     }
 
-    const result = await authService.requestPasswordReset(email);
+    await authService.requestPasswordReset(email);
 
+    // Always return success for security (don't reveal if email exists)
     res.status(200).json({
       status: 'success',
-      data: result,
+      data: {
+        message:
+          'If the email exists and the account can manage passwords, a reset link has been sent',
+      },
     });
   } catch (error) {
-    if (error instanceof Error && error.message.includes('Failed to send')) {
-      next(new AppError('Failed to send reset email. Please try again later.', 500));
-    } else {
-      next(error);
-    }
+    // Don't reveal any information about the user
+    res.status(200).json({
+      status: 'success',
+      data: {
+        message:
+          'If the email exists and the account can manage passwords, a reset link has been sent',
+      },
+    });
   }
 };
 
@@ -241,6 +252,38 @@ export const validateResetToken = async (
       } else {
         next(error);
       }
+    } else {
+      next(error);
+    }
+  }
+};
+
+/**
+ * Create owner user - Only admins can do this
+ */
+export const createOwner = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const { name, email, password, phone } = req.body;
+
+    const owner = await authService.createOwner({
+      name,
+      email,
+      password,
+      phone,
+    });
+
+    res.status(201).json({
+      status: 'success',
+      data: { owner },
+      message: 'Owner created successfully',
+    });
+  } catch (error) {
+    if (error instanceof Error && error.message.includes('already exists')) {
+      next(new AppError('Email already registered', 409));
     } else {
       next(error);
     }

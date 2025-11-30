@@ -16,6 +16,12 @@ const router = Router();
 
 // Validation rules
 const businessValidation = [
+  body('ownerId')
+    .trim()
+    .notEmpty()
+    .withMessage('Owner ID is required')
+    .isMongoId()
+    .withMessage('Owner ID must be a valid MongoDB ID'),
   body('name').trim().notEmpty().withMessage('Business name is required'),
   body('ruc')
     .optional()
@@ -51,10 +57,11 @@ const businessUpdateValidation = [
  * @swagger
  * /api/businesses:
  *   post:
- *     summary: Create a new business
+ *     summary: Create a new business (Admin only)
  *     tags: [Businesses]
  *     security:
  *       - bearerAuth: []
+ *     description: Only administrators can create new businesses. The admin will assign an owner to the business.
  *     requestBody:
  *       required: true
  *       content:
@@ -63,11 +70,16 @@ const businessUpdateValidation = [
  *             type: object
  *             required:
  *               - name
- *               - ruc
+ *               - ownerId
  *             properties:
  *               name:
  *                 type: string
  *                 example: Wellness Center
+ *               ownerId:
+ *                 type: string
+ *                 format: objectId
+ *                 example: 507f1f77bcf86cd799439011
+ *                 description: ID of the user who will own this business (must have 'owner' role)
  *               ruc:
  *                 type: string
  *                 pattern: ^\d{11}$
@@ -108,15 +120,9 @@ const businessUpdateValidation = [
  *       401:
  *         description: Unauthorized
  *       403:
- *         description: Forbidden - insufficient permissions
+ *         description: Forbidden - Only admins can create businesses
  */
-router.post(
-  '/',
-  authenticate,
-  authorize('admin', 'specialist', 'client'),
-  validate(businessValidation),
-  createBusiness
-);
+router.post('/', authenticate, authorize('admin'), validate(businessValidation), createBusiness);
 
 /**
  * @swagger
@@ -279,10 +285,11 @@ router.get('/:id', authenticate, getBusinessById);
  * @swagger
  * /api/businesses/{id}:
  *   put:
- *     summary: Update business
+ *     summary: Update business (Owner or Admin only)
  *     tags: [Businesses]
  *     security:
  *       - bearerAuth: []
+ *     description: Only the business owner or administrators can update business information
  *     parameters:
  *       - in: path
  *         name: id
@@ -310,14 +317,14 @@ router.get('/:id', authenticate, getBusinessById);
  *       401:
  *         description: Unauthorized
  *       403:
- *         description: Forbidden
+ *         description: Forbidden - Only owner or admin can update
  *       404:
  *         description: Business not found
  */
 router.put(
   '/:id',
   authenticate,
-  authorize('admin', 'specialist', 'client'),
+  authorize('admin', 'owner'),
   validate(businessUpdateValidation),
   updateBusiness
 );
@@ -326,10 +333,11 @@ router.put(
  * @swagger
  * /api/businesses/{id}:
  *   delete:
- *     summary: Delete business
+ *     summary: Delete business (Admin only)
  *     tags: [Businesses]
  *     security:
  *       - bearerAuth: []
+ *     description: Only administrators can delete businesses
  *     parameters:
  *       - in: path
  *         name: id
@@ -343,10 +351,10 @@ router.put(
  *       401:
  *         description: Unauthorized
  *       403:
- *         description: Forbidden
+ *         description: Forbidden - Only admins can delete businesses
  *       404:
  *         description: Business not found
  */
-router.delete('/:id', authenticate, authorize('admin', 'specialist', 'client'), deleteBusiness);
+router.delete('/:id', authenticate, authorize('admin'), deleteBusiness);
 
 export default router;

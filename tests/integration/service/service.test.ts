@@ -34,7 +34,7 @@ describe('Service Controller Tests', () => {
       name: 'Business Owner',
       email: 'owner@example.com',
       password: await hashPassword('password123'),
-      role: 'client',
+      role: 'owner',
     });
 
     ownerToken = generateAccessToken({
@@ -134,7 +134,7 @@ describe('Service Controller Tests', () => {
         .expect(403);
 
       expect(response.body.status).toBe('error');
-      expect(response.body.message).toContain('not authorized');
+      expect(response.body.message).toContain('permission');
     });
 
     it('should fail with invalid duration', async () => {
