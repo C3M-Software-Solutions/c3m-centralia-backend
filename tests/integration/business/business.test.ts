@@ -611,4 +611,222 @@ describe('Business Controller Tests', () => {
       await request(app).get(`/api/businesses/public/${inactiveBusiness._id}`).expect(404);
     });
   });
+
+  describe('Business Theme Configuration', () => {
+    let business: any;
+
+    beforeEach(async () => {
+      business = await Business.create({
+        name: 'Themed Business',
+        user: ownerUser._id,
+        isActive: true,
+      });
+    });
+
+    it('should create business with theme', async () => {
+      const businessData = {
+        ownerId: ownerUser._id.toString(),
+        name: 'Themed Clinic',
+        description: 'Clinic with custom theme',
+        theme: {
+          primary: '#FF5733',
+          secondary: '#33FF57',
+          background: '#FFFFFF',
+          accent: '#5733FF',
+        },
+      };
+
+      const response = await request(app)
+        .post('/api/businesses')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send(businessData)
+        .expect(201);
+
+      expect(response.body.status).toBe('success');
+      expect(response.body.data.business.theme).toBeDefined();
+      expect(response.body.data.business.theme.primary).toBe('#FF5733');
+      expect(response.body.data.business.theme.secondary).toBe('#33FF57');
+      expect(response.body.data.business.theme.background).toBe('#FFFFFF');
+      expect(response.body.data.business.theme.accent).toBe('#5733FF');
+    });
+
+    it('should update business theme by owner', async () => {
+      const updateData = {
+        theme: {
+          primary: '#00FF00',
+          secondary: '#0000FF',
+          background: '#F0F0F0',
+          accent: '#FF00FF',
+        },
+      };
+
+      const response = await request(app)
+        .put(`/api/businesses/${business._id}`)
+        .set('Authorization', `Bearer ${ownerToken}`)
+        .send(updateData)
+        .expect(200);
+
+      expect(response.body.status).toBe('success');
+      expect(response.body.data.business.theme).toBeDefined();
+      expect(response.body.data.business.theme.primary).toBe('#00FF00');
+      expect(response.body.data.business.theme.secondary).toBe('#0000FF');
+      expect(response.body.data.business.theme.background).toBe('#F0F0F0');
+      expect(response.body.data.business.theme.accent).toBe('#FF00FF');
+    });
+
+    it('should reject invalid hex color format', async () => {
+      const businessData = {
+        ownerId: ownerUser._id.toString(),
+        name: 'Invalid Theme Business',
+        theme: {
+          primary: 'red', // Invalid - not hex format
+          secondary: '#33FF57',
+          background: '#FFFFFF',
+          accent: '#5733FF',
+        },
+      };
+
+      const response = await request(app)
+        .post('/api/businesses')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send(businessData)
+        .expect(400);
+
+      expect(response.body.errors).toBeDefined();
+    });
+
+    it('should reject hex colors without # prefix', async () => {
+      const businessData = {
+        ownerId: ownerUser._id.toString(),
+        name: 'Invalid Theme Business',
+        theme: {
+          primary: 'FF5733', // Missing #
+          secondary: '#33FF57',
+          background: '#FFFFFF',
+          accent: '#5733FF',
+        },
+      };
+
+      const response = await request(app)
+        .post('/api/businesses')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send(businessData)
+        .expect(400);
+
+      expect(response.body.errors).toBeDefined();
+    });
+
+    it('should get business with theme in public endpoint', async () => {
+      const themedBusiness = await Business.create({
+        name: 'Public Themed Business',
+        user: ownerUser._id,
+        isActive: true,
+        theme: {
+          primary: '#AA5511',
+          secondary: '#11AA55',
+          background: '#EEEEEE',
+          accent: '#5511AA',
+        },
+      });
+
+      const response = await request(app)
+        .get(`/api/businesses/public/${themedBusiness._id}`)
+        .expect(200);
+
+      expect(response.body.status).toBe('success');
+      expect(response.body.data.business.theme).toBeDefined();
+      expect(response.body.data.business.theme.primary).toBe('#AA5511');
+      expect(response.body.data.business.theme.secondary).toBe('#11AA55');
+    });
+  });
+
+  describe('GET /api/businesses/my-businesses', () => {
+    beforeEach(async () => {
+      // Create multiple businesses for owner
+      await Business.create({
+        name: 'First Business',
+        user: ownerUser._id,
+        isActive: true,
+        theme: {
+          primary: '#FF0000',
+          secondary: '#00FF00',
+          background: '#FFFFFF',
+          accent: '#0000FF',
+        },
+      });
+
+      await Business.create({
+        name: 'Second Business',
+        user: ownerUser._id,
+        isActive: true,
+      });
+
+      // Create business for another owner
+      const anotherOwner = await User.create({
+        name: 'Another Owner',
+        email: 'another@example.com',
+        password: await hashPassword('password123'),
+        role: 'owner',
+      });
+
+      await Business.create({
+        name: 'Another Owner Business',
+        user: anotherOwner._id,
+        isActive: true,
+      });
+    });
+
+    it('should return all businesses for authenticated owner', async () => {
+      const response = await request(app)
+        .get('/api/businesses/my-businesses')
+        .set('Authorization', `Bearer ${ownerToken}`)
+        .expect(200);
+
+      expect(response.body.status).toBe('success');
+      expect(response.body.results).toBe(2);
+      expect(response.body.data.businesses).toHaveLength(2);
+      expect(response.body.data.businesses[0].name).toBe('First Business');
+      expect(response.body.data.businesses[1].name).toBe('Second Business');
+    });
+
+    it('should include theme in owner businesses', async () => {
+      const response = await request(app)
+        .get('/api/businesses/my-businesses')
+        .set('Authorization', `Bearer ${ownerToken}`)
+        .expect(200);
+
+      const firstBusiness = response.body.data.businesses.find(
+        (b: any) => b.name === 'First Business'
+      );
+      expect(firstBusiness.theme).toBeDefined();
+      expect(firstBusiness.theme.primary).toBe('#FF0000');
+      expect(firstBusiness.theme.secondary).toBe('#00FF00');
+    });
+
+    it('should not return businesses from other owners', async () => {
+      const response = await request(app)
+        .get('/api/businesses/my-businesses')
+        .set('Authorization', `Bearer ${ownerToken}`)
+        .expect(200);
+
+      const businesses = response.body.data.businesses;
+      const hasAnotherOwnerBusiness = businesses.some(
+        (b: any) => b.name === 'Another Owner Business'
+      );
+      expect(hasAnotherOwnerBusiness).toBe(false);
+    });
+
+    it('should require authentication', async () => {
+      await request(app).get('/api/businesses/my-businesses').expect(401);
+    });
+
+    it('should require owner role', async () => {
+      const response = await request(app)
+        .get('/api/businesses/my-businesses')
+        .set('Authorization', `Bearer ${regularToken}`)
+        .expect(403);
+
+      expect(response.body.message).toContain('permission');
+    });
+  });
 });

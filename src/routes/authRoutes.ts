@@ -11,6 +11,10 @@ import {
   resetPassword,
   validateResetToken,
   createOwner,
+  getAllOwners,
+  getOwnerById,
+  updateOwner,
+  deleteOwner,
 } from '../controllers/authController.js';
 import { authenticate, authorize } from '../middleware/auth.js';
 import { validate } from '../middleware/validate.js';
@@ -33,6 +37,13 @@ const createOwnerValidation = [
   body('email').isEmail().withMessage('Valid email is required'),
   body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters'),
   body('phone').optional().trim(),
+];
+
+const updateOwnerValidation = [
+  body('name').optional().trim().notEmpty().withMessage('Name cannot be empty'),
+  body('email').optional().isEmail().withMessage('Valid email is required'),
+  body('phone').optional().trim(),
+  body('isActive').optional().isBoolean().withMessage('isActive must be a boolean'),
 ];
 
 const loginValidation = [
@@ -540,5 +551,257 @@ router.post(
   validate(createOwnerValidation),
   createOwner
 );
+
+/**
+ * @swagger
+ * /api/auth/owners:
+ *   get:
+ *     summary: Get all owners (Admin only)
+ *     tags: [Authentication]
+ *     security:
+ *       - bearerAuth: []
+ *     description: Retrieve a list of all owner accounts. Only administrators can access this endpoint.
+ *     responses:
+ *       200:
+ *         description: List of owners retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: success
+ *                 results:
+ *                   type: integer
+ *                   example: 5
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     owners:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *                         properties:
+ *                           _id:
+ *                             type: string
+ *                           name:
+ *                             type: string
+ *                           email:
+ *                             type: string
+ *                           phone:
+ *                             type: string
+ *                           role:
+ *                             type: string
+ *                             example: owner
+ *                           isActive:
+ *                             type: boolean
+ *                           createdAt:
+ *                             type: string
+ *                             format: date-time
+ *       401:
+ *         description: Unauthorized - Authentication required
+ *       403:
+ *         description: Forbidden - Only admins can list owners
+ */
+router.get('/owners', authenticate, authorize('admin'), getAllOwners);
+
+/**
+ * @swagger
+ * /api/auth/owners/{id}:
+ *   get:
+ *     summary: Get owner by ID (Admin only)
+ *     tags: [Authentication]
+ *     security:
+ *       - bearerAuth: []
+ *     description: Retrieve details of a specific owner account. Only administrators can access this endpoint.
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Owner ID
+ *     responses:
+ *       200:
+ *         description: Owner details retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: success
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     owner:
+ *                       type: object
+ *                       properties:
+ *                         _id:
+ *                           type: string
+ *                         name:
+ *                           type: string
+ *                         email:
+ *                           type: string
+ *                         phone:
+ *                           type: string
+ *                         role:
+ *                           type: string
+ *                           example: owner
+ *                         isActive:
+ *                           type: boolean
+ *                         createdAt:
+ *                           type: string
+ *                           format: date-time
+ *       401:
+ *         description: Unauthorized - Authentication required
+ *       403:
+ *         description: Forbidden - Only admins can view owner details
+ *       404:
+ *         description: Owner not found
+ */
+router.get('/owners/:id', authenticate, authorize('admin'), getOwnerById);
+
+/**
+ * @swagger
+ * /api/auth/owners/{id}:
+ *   put:
+ *     summary: Update owner (Admin only)
+ *     tags: [Authentication]
+ *     security:
+ *       - bearerAuth: []
+ *     description: Update owner account details. Only administrators can update owner accounts.
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Owner ID
+ *     requestBody:
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *                 example: Jane Smith Updated
+ *               email:
+ *                 type: string
+ *                 format: email
+ *                 example: jane.updated@business.com
+ *               phone:
+ *                 type: string
+ *                 example: +0987654321
+ *               isActive:
+ *                 type: boolean
+ *                 example: true
+ *                 description: Activate or deactivate the owner account
+ *     responses:
+ *       200:
+ *         description: Owner updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: success
+ *                 message:
+ *                   type: string
+ *                   example: Owner updated successfully
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     owner:
+ *                       type: object
+ *                       properties:
+ *                         id:
+ *                           type: string
+ *                         name:
+ *                           type: string
+ *                         email:
+ *                           type: string
+ *                         phone:
+ *                           type: string
+ *                         role:
+ *                           type: string
+ *                           example: owner
+ *                         isActive:
+ *                           type: boolean
+ *       401:
+ *         description: Unauthorized - Authentication required
+ *       403:
+ *         description: Forbidden - Only admins can update owners
+ *       404:
+ *         description: Owner not found
+ *       409:
+ *         description: Email already in use
+ */
+router.put(
+  '/owners/:id',
+  authenticate,
+  authorize('admin'),
+  validate(updateOwnerValidation),
+  updateOwner
+);
+
+/**
+ * @swagger
+ * /api/auth/owners/{id}:
+ *   delete:
+ *     summary: Deactivate owner (Admin only)
+ *     tags: [Authentication]
+ *     security:
+ *       - bearerAuth: []
+ *     description: Soft delete (deactivate) an owner account. Only administrators can deactivate owner accounts.
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Owner ID
+ *     responses:
+ *       200:
+ *         description: Owner deactivated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: success
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     message:
+ *                       type: string
+ *                       example: Owner deactivated successfully
+ *                     owner:
+ *                       type: object
+ *                       properties:
+ *                         id:
+ *                           type: string
+ *                         name:
+ *                           type: string
+ *                         email:
+ *                           type: string
+ *                         isActive:
+ *                           type: boolean
+ *                           example: false
+ *       401:
+ *         description: Unauthorized - Authentication required
+ *       403:
+ *         description: Forbidden - Only admins can deactivate owners
+ *       404:
+ *         description: Owner not found
+ */
+router.delete('/owners/:id', authenticate, authorize('admin'), deleteOwner);
 
 export default router;

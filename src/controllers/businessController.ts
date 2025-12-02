@@ -167,6 +167,33 @@ export const updateBusiness = async (
   }
 };
 
+export const getMyBusiness = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const userId = req.user?.userId;
+
+    if (!userId) {
+      throw new AppError('Unauthorized', 401);
+    }
+
+    const business = await businessService.getBusinessByOwner(userId.toString());
+
+    if (!business) {
+      return next(new AppError('No business found for this owner', 404));
+    }
+
+    res.status(200).json({
+      status: 'success',
+      data: { business },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const deleteBusiness = async (
   req: Request,
   res: Response,

@@ -289,3 +289,113 @@ export const createOwner = async (
     }
   }
 };
+
+/**
+ * Get all owners - Admin only
+ */
+export const getAllOwners = async (
+  _req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const owners = await authService.getAllOwners();
+
+    res.status(200).json({
+      status: 'success',
+      results: owners.length,
+      data: { owners },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Get owner by ID - Admin only
+ */
+export const getOwnerById = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const owner = await authService.getOwnerById(id);
+
+    res.status(200).json({
+      status: 'success',
+      data: { owner },
+    });
+  } catch (error) {
+    if (error instanceof Error && error.message === 'Owner not found') {
+      next(new AppError('Owner not found', 404));
+    } else {
+      next(error);
+    }
+  }
+};
+
+/**
+ * Update owner - Admin only
+ */
+export const updateOwner = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const { name, email, phone, isActive } = req.body;
+
+    const owner = await authService.updateOwner(id, {
+      name,
+      email,
+      phone,
+      isActive,
+    });
+
+    res.status(200).json({
+      status: 'success',
+      data: { owner },
+      message: 'Owner updated successfully',
+    });
+  } catch (error) {
+    if (error instanceof Error) {
+      if (error.message === 'Owner not found') {
+        next(new AppError('Owner not found', 404));
+      } else if (error.message === 'Email already in use') {
+        next(new AppError('Email already in use', 409));
+      } else {
+        next(error);
+      }
+    } else {
+      next(error);
+    }
+  }
+};
+
+/**
+ * Delete/Deactivate owner - Admin only
+ */
+export const deleteOwner = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const result = await authService.deleteOwner(id);
+
+    res.status(200).json({
+      status: 'success',
+      data: result,
+    });
+  } catch (error) {
+    if (error instanceof Error && error.message === 'Owner not found') {
+      next(new AppError('Owner not found', 404));
+    } else {
+      next(error);
+    }
+  }
+};

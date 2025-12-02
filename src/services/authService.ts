@@ -20,6 +20,13 @@ export interface CreateOwnerData {
   phone?: string;
 }
 
+export interface UpdateOwnerData {
+  name?: string;
+  email?: string;
+  phone?: string;
+  isActive?: boolean;
+}
+
 export interface LoginData {
   email: string;
   password: string;
@@ -278,6 +285,92 @@ export class AuthService {
       name: owner.name,
       email: owner.email,
       role: owner.role,
+    };
+  }
+
+  /**
+   * Get all owners - Admin only
+   */
+  async getAllOwners() {
+    const owners = await User.find({ role: 'owner' }).select(
+      '-password -resetPasswordToken -resetPasswordExpires'
+    );
+    return owners;
+  }
+
+  /**
+   * Get owner by ID - Admin only
+   */
+  async getOwnerById(ownerId: string) {
+    const owner = await User.findOne({ _id: ownerId, role: 'owner' }).select(
+      '-password -resetPasswordToken -resetPasswordExpires'
+    );
+
+    if (!owner) {
+      throw new Error('Owner not found');
+    }
+
+    return owner;
+  }
+
+  /**
+   * Update owner - Admin only
+   */
+  async updateOwner(ownerId: string, data: UpdateOwnerData) {
+    const owner = await User.findOne({ _id: ownerId, role: 'owner' });
+
+    if (!owner) {
+      throw new Error('Owner not found');
+    }
+
+    // Check if email is being changed and if it's already taken
+    if (data.email && data.email !== owner.email) {
+      const existingUser = await User.findOne({ email: data.email });
+      if (existingUser) {
+        throw new Error('Email already in use');
+      }
+    }
+
+    // Update fields
+    if (data.name) owner.name = data.name;
+    if (data.email) owner.email = data.email;
+    if (data.phone !== undefined) owner.phone = data.phone;
+    if (data.isActive !== undefined) owner.isActive = data.isActive;
+
+    await owner.save();
+
+    return {
+      id: owner._id,
+      name: owner.name,
+      email: owner.email,
+      phone: owner.phone,
+      role: owner.role,
+      isActive: owner.isActive,
+    };
+  }
+
+  /**
+   * Delete/Deactivate owner - Admin only
+   */
+  async deleteOwner(ownerId: string) {
+    const owner = await User.findOne({ _id: ownerId, role: 'owner' });
+
+    if (!owner) {
+      throw new Error('Owner not found');
+    }
+
+    // Soft delete - just deactivate
+    owner.isActive = false;
+    await owner.save();
+
+    return {
+      message: 'Owner deactivated successfully',
+      owner: {
+        id: owner._id,
+        name: owner.name,
+        email: owner.email,
+        isActive: owner.isActive,
+      },
     };
   }
 }

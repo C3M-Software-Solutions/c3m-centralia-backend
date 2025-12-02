@@ -12,6 +12,12 @@ export interface CreateBusinessData {
   email?: string;
   logo?: string;
   ownerId: string;
+  theme?: {
+    primary: string;
+    secondary: string;
+    background: string;
+    accent: string;
+  };
 }
 
 export interface UpdateBusinessData {
@@ -22,6 +28,12 @@ export interface UpdateBusinessData {
   email?: string;
   logo?: string;
   isActive?: boolean;
+  theme?: {
+    primary?: string;
+    secondary?: string;
+    background?: string;
+    accent?: string;
+  };
 }
 
 export interface CreateServiceData {
@@ -58,6 +70,7 @@ export class BusinessService {
       email: data.email,
       logo: data.logo,
       user: data.ownerId,
+      theme: data.theme,
     });
     return business;
   }
@@ -76,6 +89,11 @@ export class BusinessService {
   async getBusinessesByOwner(ownerId: string) {
     const businesses = await Business.find({ user: ownerId });
     return businesses;
+  }
+
+  async getBusinessByOwner(ownerId: string) {
+    const business = await Business.findOne({ user: ownerId }).populate('user', 'name email');
+    return business;
   }
 
   async getAllBusinesses(page = 1, limit = 10, filters?: { search?: string; city?: string }) {

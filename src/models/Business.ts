@@ -18,6 +18,12 @@ export interface IBusiness extends Document {
     closeTime: string;
     isOpen: boolean;
   }[];
+  theme?: {
+    primary: string;
+    secondary: string;
+    background: string;
+    accent: string;
+  };
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -95,6 +101,35 @@ const businessSchema = new Schema<IBusiness>(
         },
       },
     ],
+    theme: {
+      type: {
+        primary: {
+          type: String,
+          trim: true,
+          match: [/^#[0-9A-Fa-f]{6}$/, 'Primary color must be a valid hex color (e.g., #FF5733)'],
+        },
+        secondary: {
+          type: String,
+          trim: true,
+          match: [/^#[0-9A-Fa-f]{6}$/, 'Secondary color must be a valid hex color (e.g., #33FF57)'],
+        },
+        background: {
+          type: String,
+          trim: true,
+          match: [
+            /^#[0-9A-Fa-f]{6}$/,
+            'Background color must be a valid hex color (e.g., #FFFFFF)',
+          ],
+        },
+        accent: {
+          type: String,
+          trim: true,
+          match: [/^#[0-9A-Fa-f]{6}$/, 'Accent color must be a valid hex color (e.g., #5733FF)'],
+        },
+      },
+      required: false,
+      _id: false,
+    },
     isActive: {
       type: Boolean,
       default: true,

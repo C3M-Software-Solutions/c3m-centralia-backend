@@ -8,6 +8,7 @@ import {
   getBusinessByIdPublic,
   updateBusiness,
   deleteBusiness,
+  getMyBusiness,
 } from '../controllers/businessController.js';
 import { authenticate, authorize } from '../middleware/auth.js';
 import { validate } from '../middleware/validate.js';
@@ -35,6 +36,23 @@ const businessValidation = [
   body('hasRemoteSessions').optional().isBoolean(),
   body('phone').optional().trim(),
   body('email').optional().isEmail().withMessage('Valid email required'),
+  body('theme').optional().isObject().withMessage('Theme must be an object'),
+  body('theme.primary')
+    .optional()
+    .matches(/^#[0-9A-Fa-f]{6}$/)
+    .withMessage('Primary color must be a valid hex color (e.g., #FF5733)'),
+  body('theme.secondary')
+    .optional()
+    .matches(/^#[0-9A-Fa-f]{6}$/)
+    .withMessage('Secondary color must be a valid hex color (e.g., #33FF57)'),
+  body('theme.background')
+    .optional()
+    .matches(/^#[0-9A-Fa-f]{6}$/)
+    .withMessage('Background color must be a valid hex color (e.g., #FFFFFF)'),
+  body('theme.accent')
+    .optional()
+    .matches(/^#[0-9A-Fa-f]{6}$/)
+    .withMessage('Accent color must be a valid hex color (e.g., #5733FF)'),
 ];
 
 const businessUpdateValidation = [
@@ -51,6 +69,23 @@ const businessUpdateValidation = [
   body('hasRemoteSessions').optional().isBoolean(),
   body('phone').optional().trim(),
   body('email').optional().isEmail().withMessage('Valid email required'),
+  body('theme').optional().isObject().withMessage('Theme must be an object'),
+  body('theme.primary')
+    .optional()
+    .matches(/^#[0-9A-Fa-f]{6}$/)
+    .withMessage('Primary color must be a valid hex color (e.g., #FF5733)'),
+  body('theme.secondary')
+    .optional()
+    .matches(/^#[0-9A-Fa-f]{6}$/)
+    .withMessage('Secondary color must be a valid hex color (e.g., #33FF57)'),
+  body('theme.background')
+    .optional()
+    .matches(/^#[0-9A-Fa-f]{6}$/)
+    .withMessage('Background color must be a valid hex color (e.g., #FFFFFF)'),
+  body('theme.accent')
+    .optional()
+    .matches(/^#[0-9A-Fa-f]{6}$/)
+    .withMessage('Accent color must be a valid hex color (e.g., #5733FF)'),
 ];
 
 /**
@@ -101,6 +136,30 @@ const businessUpdateValidation = [
  *               email:
  *                 type: string
  *                 format: email
+ *               theme:
+ *                 type: object
+ *                 description: Customizable theme colors for the business branding
+ *                 properties:
+ *                   primary:
+ *                     type: string
+ *                     pattern: ^#[0-9A-Fa-f]{6}$
+ *                     example: "#FF5733"
+ *                     description: Primary brand color (hex format)
+ *                   secondary:
+ *                     type: string
+ *                     pattern: ^#[0-9A-Fa-f]{6}$
+ *                     example: "#33FF57"
+ *                     description: Secondary brand color (hex format)
+ *                   background:
+ *                     type: string
+ *                     pattern: ^#[0-9A-Fa-f]{6}$
+ *                     example: "#FFFFFF"
+ *                     description: Background color (hex format)
+ *                   accent:
+ *                     type: string
+ *                     pattern: ^#[0-9A-Fa-f]{6}$
+ *                     example: "#5733FF"
+ *                     description: Accent color for highlights (hex format)
  *     responses:
  *       201:
  *         description: Business created successfully
@@ -190,6 +249,40 @@ router.post('/', authenticate, authorize('admin'), validate(businessValidation),
  *                           type: integer
  */
 router.get('/', getAllBusinesses);
+
+/**
+ * @swagger
+ * /api/businesses/my-business:
+ *   get:
+ *     summary: Get the business owned by authenticated owner
+ *     tags: [Businesses]
+ *     security:
+ *       - bearerAuth: []
+ *     description: Returns the business that belongs to the authenticated owner. Each owner can only have one business. Returns full details including theme configuration.
+ *     responses:
+ *       200:
+ *         description: Owner's business details
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: success
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     business:
+ *                       $ref: '#/components/schemas/Business'
+ *       401:
+ *         description: Unauthorized - Authentication required
+ *       403:
+ *         description: Forbidden - Only owners can access this endpoint
+ *       404:
+ *         description: No business found for this owner
+ */
+router.get('/my-business', authenticate, authorize('owner'), getMyBusiness);
 
 /**
  * @swagger
@@ -311,6 +404,30 @@ router.get('/:id', authenticate, getBusinessById);
  *                 type: string
  *               address:
  *                 type: string
+ *               theme:
+ *                 type: object
+ *                 description: Customizable theme colors for the business branding (Owner can update)
+ *                 properties:
+ *                   primary:
+ *                     type: string
+ *                     pattern: ^#[0-9A-Fa-f]{6}$
+ *                     example: "#FF5733"
+ *                     description: Primary brand color (hex format)
+ *                   secondary:
+ *                     type: string
+ *                     pattern: ^#[0-9A-Fa-f]{6}$
+ *                     example: "#33FF57"
+ *                     description: Secondary brand color (hex format)
+ *                   background:
+ *                     type: string
+ *                     pattern: ^#[0-9A-Fa-f]{6}$
+ *                     example: "#FFFFFF"
+ *                     description: Background color (hex format)
+ *                   accent:
+ *                     type: string
+ *                     pattern: ^#[0-9A-Fa-f]{6}$
+ *                     example: "#5733FF"
+ *                     description: Accent color for highlights (hex format)
  *     responses:
  *       200:
  *         description: Business updated successfully
