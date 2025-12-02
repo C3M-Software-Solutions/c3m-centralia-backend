@@ -56,13 +56,13 @@ export const getReservations = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const { status, specialist, startDate, endDate, date, dateFrom, dateTo } = req.query;
+    const { status, specialist, business, startDate, endDate, date, dateFrom, dateTo } = req.query;
     const userId = req.user?.userId;
     const userRole = req.user?.role;
 
     const filter: Record<string, unknown> = {};
 
-    // Users see only their reservations, specialists see theirs, admins see all
+    // Users see only their reservations, specialists see theirs, owners see their business reservations, admins see all
     if (userRole === 'client') {
       filter.userId = userId?.toString();
     } else if (userRole === 'specialist') {
@@ -70,6 +70,9 @@ export const getReservations = async (
       if (specialistDoc) {
         filter.specialistId = specialistDoc._id.toString();
       }
+    } else if (userRole === 'owner' && business) {
+      // Owner can filter by their business
+      filter.businessId = business as string;
     }
 
     if (status) {
@@ -78,6 +81,11 @@ export const getReservations = async (
 
     if (specialist) {
       filter.specialistId = specialist as string;
+    }
+
+    // Allow filtering by business for admin and owner roles
+    if (business && (userRole === 'admin' || userRole === 'owner')) {
+      filter.businessId = business as string;
     }
 
     // Handle date filtering

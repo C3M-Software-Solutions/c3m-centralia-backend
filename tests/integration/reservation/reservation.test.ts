@@ -566,6 +566,168 @@ describe('Reservation Integration Tests', () => {
     });
   });
 
+  describe('GET /api/reservations - Owner business filter', () => {
+    let ownerUser: any;
+    let ownerToken: string;
+    let ownerBusiness: any;
+    let otherBusiness: any;
+
+    beforeEach(async () => {
+      // Create owner user
+      ownerUser = await User.create({
+        name: 'Owner User',
+        email: 'owner@test.com',
+        password: await hashPassword('password123'),
+        role: 'owner',
+      });
+
+      ownerToken = generateAccessToken({
+        userId: ownerUser._id,
+        email: ownerUser.email,
+        role: ownerUser.role,
+      });
+
+      // Create owner's business
+      ownerBusiness = await Business.create({
+        name: 'Owner Business',
+        user: ownerUser._id,
+      });
+
+      // Create another business
+      otherBusiness = await Business.create({
+        name: 'Other Business',
+        user: clientUser._id,
+      });
+
+      // Create specialists for both businesses
+      const ownerSpecialistUser = await User.create({
+        name: 'Owner Specialist',
+        email: 'owner.specialist@test.com',
+        password: await hashPassword('password123'),
+        role: 'specialist',
+      });
+
+      const ownerSpecialist = await Specialist.create({
+        user: ownerSpecialistUser._id,
+        business: ownerBusiness._id,
+        specialty: 'Owner Specialty',
+        isActive: true,
+      });
+
+      const otherSpecialistUser = await User.create({
+        name: 'Other Specialist',
+        email: 'other.specialist@test.com',
+        password: await hashPassword('password123'),
+        role: 'specialist',
+      });
+
+      const otherSpecialist = await Specialist.create({
+        user: otherSpecialistUser._id,
+        business: otherBusiness._id,
+        specialty: 'Other Specialty',
+        isActive: true,
+      });
+
+      // Create services for both businesses
+      const ownerService = await Service.create({
+        business: ownerBusiness._id,
+        name: 'Owner Service',
+        duration: 60,
+        price: 100,
+        isActive: true,
+      });
+
+      const otherService = await Service.create({
+        business: otherBusiness._id,
+        name: 'Other Service',
+        duration: 60,
+        price: 100,
+        isActive: true,
+      });
+
+      // Create reservations for both businesses
+      await Reservation.create({
+        user: clientUser._id,
+        business: ownerBusiness._id,
+        specialist: ownerSpecialist._id,
+        service: ownerService._id,
+        startDate: new Date('2025-11-24T10:00:00Z'),
+        endDate: new Date('2025-11-24T11:00:00Z'),
+        status: 'pending',
+      });
+
+      await Reservation.create({
+        user: clientUser._id,
+        business: ownerBusiness._id,
+        specialist: ownerSpecialist._id,
+        service: ownerService._id,
+        startDate: new Date('2025-11-25T14:00:00Z'),
+        endDate: new Date('2025-11-25T15:00:00Z'),
+        status: 'confirmed',
+      });
+
+      await Reservation.create({
+        user: clientUser._id,
+        business: otherBusiness._id,
+        specialist: otherSpecialist._id,
+        service: otherService._id,
+        startDate: new Date('2025-11-26T09:00:00Z'),
+        endDate: new Date('2025-11-26T10:00:00Z'),
+        status: 'confirmed',
+      });
+    });
+
+    it('should allow owner to filter reservations by their business', async () => {
+      const response = await request(app)
+        .get('/api/reservations')
+        .set('Authorization', `Bearer ${ownerToken}`)
+        .query({ business: ownerBusiness._id.toString() })
+        .expect(200);
+
+      expect(response.body.status).toBe('success');
+      expect(response.body.results).toBe(2);
+
+      // Verify all reservations belong to owner's business
+      response.body.data.reservations.forEach((reservation: any) => {
+        expect(reservation.business._id.toString()).toBe(ownerBusiness._id.toString());
+      });
+    });
+
+    it('should not show reservations from other businesses when filtering', async () => {
+      const response = await request(app)
+        .get('/api/reservations')
+        .set('Authorization', `Bearer ${ownerToken}`)
+        .query({ business: ownerBusiness._id.toString() })
+        .expect(200);
+
+      expect(response.body.status).toBe('success');
+
+      // Verify no reservations from other business
+      const hasOtherBusinessReservation = response.body.data.reservations.some(
+        (reservation: any) => reservation.business._id.toString() === otherBusiness._id.toString()
+      );
+      expect(hasOtherBusinessReservation).toBe(false);
+    });
+
+    it('should combine business filter with other filters', async () => {
+      const response = await request(app)
+        .get('/api/reservations')
+        .set('Authorization', `Bearer ${ownerToken}`)
+        .query({
+          business: ownerBusiness._id.toString(),
+          status: 'confirmed',
+        })
+        .expect(200);
+
+      expect(response.body.status).toBe('success');
+      expect(response.body.results).toBe(1);
+      expect(response.body.data.reservations[0].status).toBe('confirmed');
+      expect(response.body.data.reservations[0].business._id.toString()).toBe(
+        ownerBusiness._id.toString()
+      );
+    });
+  });
+
   describe('GET /api/reservations/specialist/my-reservations', () => {
     let specialistToken: string;
     let anotherSpecialist: typeof specialist;

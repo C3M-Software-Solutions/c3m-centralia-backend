@@ -165,6 +165,12 @@ router.get('/', authenticate, getReservations);
  *           enum: [pending, confirmed, cancelled, completed, no-show]
  *         description: Filter by reservation status
  *       - in: query
+ *         name: business
+ *         schema:
+ *           type: string
+ *         description: Filter by business ID (admin and owner only)
+ *         example: "507f1f77bcf86cd799439011"
+ *       - in: query
  *         name: specialist
  *         schema:
  *           type: string
@@ -227,12 +233,14 @@ router.get('/', authenticate, getReservations);
  *       Returns reservations based on user role:
  *       - **Client**: Only their own reservations
  *       - **Specialist**: Only reservations assigned to them
- *       - **Admin**: All reservations for their business
+ *       - **Owner**: Can filter by their business using 'business' parameter to see all reservations
+ *       - **Admin**: All reservations, can filter by business
  *
  *       **Filter Examples:**
  *       - Get today's reservations: `?date=2025-11-24`
  *       - Get this week's reservations: `?dateFrom=2025-11-20&dateTo=2025-11-26`
  *       - Get pending reservations for a specialist: `?specialist=507f1f77bcf86cd799439011&status=pending`
+ *       - Get all reservations for a business (owner/admin): `?business=507f1f77bcf86cd799439011`
  */
 router.get('/availability', checkAvailability);
 

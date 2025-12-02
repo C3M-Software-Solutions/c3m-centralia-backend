@@ -2297,6 +2297,15 @@
           },
           {
             "in": "query",
+            "name": "business",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Filter by business ID (admin and owner only)",
+            "example": "507f1f77bcf86cd799439011"
+          },
+          {
+            "in": "query",
             "name": "specialist",
             "schema": {
               "type": "string"
@@ -2385,7 +2394,7 @@
             }
           }
         },
-        "description": "Returns reservations based on user role:\n- **Client**: Only their own reservations\n- **Specialist**: Only reservations assigned to them\n- **Admin**: All reservations for their business\n\n**Filter Examples:**\n- Get today's reservations: `?date=2025-11-24`\n- Get this week's reservations: `?dateFrom=2025-11-20&dateTo=2025-11-26`\n- Get pending reservations for a specialist: `?specialist=507f1f77bcf86cd799439011&status=pending`\n"
+        "description": "Returns reservations based on user role:\n- **Client**: Only their own reservations\n- **Specialist**: Only reservations assigned to them\n- **Owner**: Can filter by their business using 'business' parameter to see all reservations\n- **Admin**: All reservations, can filter by business\n\n**Filter Examples:**\n- Get today's reservations: `?date=2025-11-24`\n- Get this week's reservations: `?dateFrom=2025-11-20&dateTo=2025-11-26`\n- Get pending reservations for a specialist: `?specialist=507f1f77bcf86cd799439011&status=pending`\n- Get all reservations for a business (owner/admin): `?business=507f1f77bcf86cd799439011`\n"
       }
     },
     "/api/reservations/{id}": {

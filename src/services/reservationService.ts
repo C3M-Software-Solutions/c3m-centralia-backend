@@ -22,6 +22,7 @@ export interface UpdateReservationData {
 
 export interface ReservationFilterData {
   userId?: string;
+  businessId?: string;
   specialistId?: string;
   status?: string;
   startDate?: Date;
@@ -142,6 +143,7 @@ export class ReservationService {
   async getReservations(filter: ReservationFilterData) {
     interface QueryFilter {
       user?: string;
+      business?: string;
       specialist?: string;
       status?: string;
       startDate?: {
@@ -154,6 +156,10 @@ export class ReservationService {
 
     if (filter.userId) {
       query.user = filter.userId;
+    }
+
+    if (filter.businessId) {
+      query.business = filter.businessId;
     }
 
     if (filter.specialistId) {
